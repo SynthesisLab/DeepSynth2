@@ -1,58 +1,17 @@
-![DeepSynth2 Logo](./images/logo.png)
 
---------------------------------------------------------------------------------
-[![Tests](https://github.com/SynthesisLab/DeepSynth2/actions/workflows/tests.yaml/badge.svg)](https://github.com/SynthesisLab/DeepSynth2/actions/workflows/tests.yaml)
+## Running PS4RL
 
-DeepSynth2 is a high-level framework that enables to leverage program synthesis for other domains such as reinforcement learning or system design.
+Generate the the filter:
 
-<!-- toc -->
+```bash
+./generate_dfta.sh
+```
 
-- [More About DeepSynth2](#more-about-deepsynth2)
-  - [Combining Deep Learning with Theoretical Guarantees](#combining-deep-learning-with-theoretical-guarantees)
-  - [A Scalable Framework](#a-scalable-framework)
-- [Installation](#installation)
-  - [From Source](#from-source)
-    - [Install DeepSynth2](#install-deepsynth2)
-- [Documentation](#documentation)
-  - [Online](https://theomat.github.io/DeepSynth2/)
-  - [Local](#documentation)
-- [Troubleshooting](#troubleshooting)
-- [Examples](./examples)
-- [The Team](#the-team)
-- [License](#license)
+Run the experiment for CartPole:
 
-<!-- tocstop -->
-
-## More About DeepSynth2
-
-At a granular level, DeepSynth2 is a library that consists of the following components:
-
-| Component | Description |
-| ---- | --- |
-| [**synth**](./synth) | A high level synthesis libary |
-| [**synth.generation**](./synth/generation) | A compilation of tools to generate objects needed for the synthesis, it is mainly used with deep learning  |
-| [**synth.nn**](./synth/nn) | A library to build neural network with for synthesis  |
-| [**synth.pbe**](./synth/pbe) | A library to work in the Programming By Example (PBE) framework |
-| [**synth.filter**](./synth/filter) | A library with filtering strategies |
-| [**synth.semantic**](./synth/semantic) | A library of program evaluators |
-| [**synth.syntax**](./synth/syntax) | A library to manipulate dsl, grammars, probabilistic grammars |
-| [**synth.utils**](./synth/utils) | Utility objects and functions that do not fit elsewhere |
-
-Elaborating Further:
-
-### Combining Deep Learning with Theoretical Guarantees
-
-The advantage of "classic" algorithms are their theoretical guarantees.
-But many new deep learning based methods have emerged, they provide a tremendous efficiency but lose almost all theoretical guarantees.
-DeepSynth2 provides already implemented algorithms that combine both approaches to get the best of both worlds: speed and guarantees!
-
-### A Scalable Framework
-
-Computing is now done at a large scale in a parallelilized fashion.
-As such frameworks should also adapt: they should scale with more computing power but also leverage the power of parallelization.
-This was taken into account and this is why for most algorithms we provide, we also provide a way to scale with the number of available processors.
-
-For example, you can split probabilistic grammars into disjoint sub grammars to split the enumeration of the grammar into multiple jobs thus enabling to scale linearly with the numbers of workers.
+```bash
+./run_exp.sh cartpole @examples/rl/envs/cart_pole.txt
+```
 
 ## Installation
 
