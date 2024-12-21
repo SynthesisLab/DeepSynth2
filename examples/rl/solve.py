@@ -48,6 +48,9 @@ parser.add_argument(
 )
 parser.add_argument("-s", "--seed", type=int, default=1, help="seed")
 parser.add_argument(
+    "-o", "--output", type=str, default="./search_data.csv", help="CSV file name"
+)
+parser.add_argument(
     "--filter",
     nargs="*",
     type=str,
@@ -59,6 +62,7 @@ SEED: int = params.seed
 # DERIVATIVE_TIMESTEP: int = params.derivative
 TARGET_RETURN: float = params.goal
 filter_files: List[str] = params.filter or []
+output_file: str = params.output
 env_args: Dict = json.loads(params.env_arg)
 env_name: str = params.env
 env = gym.make(env_name, **env_args)
@@ -224,7 +228,7 @@ def at_exit():
     print_best_program()
     import csv
 
-    with open(f"./search_data_{env_name}.csv", "w") as fd:
+    with open(output_file, "w") as fd:
         csv.writer(fd).writerows(stats)
     # if evaluator.num_candidates() > 0:
     # program_eval.render_program(env, evaluator.get_best_stats()[0], prog_evaluator)
