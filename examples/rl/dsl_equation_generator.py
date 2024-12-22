@@ -229,7 +229,7 @@ def check_symmetries() -> None:
                 continue
             programs_done.add(current_prog)
             used = current_prog.used_variables()
-            if len(used) == 1 and (0 not in used or nargs > 1):
+            if len(used) == 1 and 0 not in used:
                 continue
             is_constant, is_identity, candidates, my_outputs = check_program(
                 current_prog, inputs, all_sol
