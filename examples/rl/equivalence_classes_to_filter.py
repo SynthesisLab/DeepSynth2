@@ -252,7 +252,9 @@ class FiltersBuilder:
         return out
 
     @staticmethod
-    def from_dsl(dsl: DSL) -> "FiltersBuilder":
+    def from_dsl(
+        dsl: DSL, constant_types: Set[Type], allow_constant_expressions: bool = False
+    ) -> "FiltersBuilder":
         primitives = dsl.list_primitives
         primitive2state: Dict[Primitive, Tuple[Type, Primitive]] = {}
         rules: Dict[
@@ -264,17 +266,23 @@ class FiltersBuilder:
         for primitive in primitives:
             args_possibles = []
             for arg_type in primitive.type.arguments():
-                args_possibles.append(
-                    [
-                        primitive2state[p]
-                        for p in primitive2state.keys()
-                        if p.type.returns() == arg_type
-                    ]
-                    + [(uk, Variable(0, uk))]
-                )
+                to_add = [
+                    primitive2state[p]
+                    for p in primitive2state.keys()
+                    if p.type.returns() == arg_type
+                ] + [(uk, Variable(0, uk))]
+                if arg_type in constant_types:
+                    to_add += [(arg_type, Constant(arg_type))]
+                args_possibles.append(to_add)
             for arg_comb in itertools.product(*args_possibles):
+                if not allow_constant_expressions and all(
+                    isinstance(arg[1], Constant) for arg in arg_comb
+                ):
+                    continue
                 rules[(primitive, tuple(arg_comb))] = primitive2state[primitive]
         rules[(Variable(0, uk), tuple())] = (uk, Variable(0, uk))
+        for type in constant_types:
+            rules[(Constant(type), tuple())] = (type, Constant(type))
         return FiltersBuilder(DFTA(rules, set()))
 
 
@@ -283,11 +291,13 @@ def equivalence_classes_to_filters(
     eq_classes: List[Set[Program]],
     dsl: DSL,
     progress: bool = True,
+    constant_types: Set[Type] = set(),
+    allow_constant_expressions: bool = False,
 ) -> FiltersBuilder:
     added = 0
     pbar = tqdm.tqdm(eq_classes) if progress else eq_classes
     total = 0
-    builder = FiltersBuilder.from_dsl(dsl)
+    builder = FiltersBuilder.from_dsl(dsl, constant_types, allow_constant_expressions)
     for program in commutatives:
         added += builder.add_commutativity_constraint(program)
         total += 1
@@ -322,6 +332,8 @@ def derivable_program_to_code(
         return f'Primitive("{program.primitive}", {type_part})'
     elif isinstance(program, Variable):
         return f"Variable({program.variable}, {type_part})"
+    elif isinstance(program, Constant):
+        return f"Constant({type_part})"
     assert False, "not implemented"
 
 
@@ -380,7 +392,9 @@ if __name__ == "__main__":
         ]
     if verbose:
         print(f"found {F.CYAN}{len(classes)}{F.RESET} equivalence classes")
-    builder = equivalence_classes_to_filters(commutatives, classes, dsl)
+    builder = equivalence_classes_to_filters(
+        commutatives, classes, dsl, constant_types={auto_type("float")}
+    )
     if verbose:
         stats = builder.stats
         print(
