@@ -24,6 +24,22 @@ from synth.syntax.type_helper import auto_type
 uk = UnknownType()
 
 
+def __is_generic__(arg: Program, used_vars: Set[int]) -> bool:
+    if isinstance(arg, Variable):
+        if arg.variable in used_vars:
+            return False
+        used_vars.add(arg.variable)
+        return True
+    elif isinstance(arg, Function):
+        for arg_arg in arg.arguments:
+            if not __is_generic__(arg_arg, used_vars):
+                return False
+        return True
+    elif isinstance(arg, Constant):
+        return True
+    return False
+
+
 class FiltersBuilder:
     def __init__(
         self, dfta: DFTA[Tuple[Type, DerivableProgram], DerivableProgram]
@@ -66,7 +82,7 @@ class FiltersBuilder:
             print("\texploited commutativity of", program.function)
         return True
 
-    def __simple_constraint(self, program: Program) -> bool:
+    def __one_var_constraint(self, program: Program) -> bool:
         vars = 0
         for p in program.depth_first_iter():
             if isinstance(p, Variable):
@@ -87,7 +103,31 @@ class FiltersBuilder:
         for state in relevant:
             del self.dfta.rules[state]
         if verbose:
-            print("\tforbid", program)
+            print("\t[one-var] forbid", program)
+        return True
+
+    def __depth_2_constraint(self, program: Function) -> bool:
+        if program.depth() != 3:
+            return False
+        fun = program.function
+        used_vars = set()
+        for arg in program.arguments:
+            if not __is_generic__(arg, used_vars):
+                return False
+        relevant = []
+        for state in self.dfta.rules:
+            if state[0] == fun:
+                success = True
+                for arg, sarg in zip(program.arguments, state[1]):
+                    if isinstance(arg, Function) and arg.function != sarg[1]:
+                        success = False
+                        break
+                if success:
+                    relevant.append(state)
+        for state in relevant:
+            del self.dfta.rules[state]
+        if verbose:
+            print("\t[depth-2] forbid", program)
         return True
 
     def __program_to_stateless_constraint(self, program: Program) -> bool:
@@ -107,9 +147,11 @@ class FiltersBuilder:
         self.stats["constraints.total"] += 1
         if program.depth() > 3 or not isinstance(program, Function):
             return False
-        out = self.__simple_constraint(
-            program
-        ) or self.__program_to_stateless_constraint(program)
+        out = (
+            self.__one_var_constraint(program)
+            or self.__depth_2_constraint(program)
+            or self.__program_to_stateless_constraint(program)
+        )
         if out:
             self.stats["constraints.successes"] += 1
         return out
