@@ -17,7 +17,7 @@ def __state2env__(state: np.ndarray) -> Tuple:
 def __adapt_action2env__(env: gym.Env, action) -> List:
     if isinstance(env.action_space, gym.spaces.Box):
         if len(env.action_space.shape) == 1 and env.action_space.shape[0] == 1:
-            return [action]
+            return [min(max(action, env.action_space.low[0]), env.action_space.high[0])]
     return action
 
 
