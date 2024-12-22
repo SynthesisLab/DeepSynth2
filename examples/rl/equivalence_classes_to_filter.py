@@ -136,8 +136,16 @@ class FiltersBuilder:
             for i, arg in enumerate(program.arguments):
                 if not isinstance(arg, Variable):
                     return False
+                if arg.variable >= len(program.arguments):
+                    return False
                 diff.append((i, arg.variable))
-            self.equal_parameters_reject.add((program.function, tuple(diff)))
+            used = {x[0] for x in diff}
+            for x in diff:
+                used.add(x[1])
+            remap = {var_name: i for i, var_name in enumerate(sorted(used))}
+            self.equal_parameters_reject.add(
+                (program.function, tuple((remap[i], remap[j]) for i, j in diff))
+            )
             if verbose:
                 print("\tstateless exploit of", program)
             return True
