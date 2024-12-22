@@ -23,6 +23,8 @@ from synth.syntax.type_helper import auto_type
 
 uk = UnknownType()
 
+verbose: bool = False
+
 
 def __is_generic__(arg: Program, used_vars: Set[int]) -> bool:
     if isinstance(arg, Variable):
@@ -422,7 +424,7 @@ if __name__ == "__main__":
     )
     parameters = parser.parse_args()
     data_file: str = parameters.data
-    verbose: bool = parameters.verbose
+    verbose = parameters.verbose
     comment: bool = parameters.comment
     from control_dsl import get_dsl
 
