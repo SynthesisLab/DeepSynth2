@@ -1,6 +1,7 @@
 #!/bin/bash
-NAME="$1"
-ENV="$2"
+ENV="$1"
+filename=$(basename -- "$ENV")
+NAME="${filename%.*}"
 DFTAS="automatic"
 DFTA_SUFFIX="_dfta_filter_control.py"
 SEEDS="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
