@@ -52,10 +52,16 @@ if __name__ == "__main__":
         "--size", type=int, default=100, help="generated dataset size (default: 100)"
     )
     parser.add_argument(
-        "--max-operations",
+        "--min-operations",
+        type=int,
+        default=3,
+        help="solutions min operations (default: 3)",
+    )
+    parser.add_argument(
+        "--max-depth",
         type=int,
         default=5,
-        help="solutions max operations (default: 5)",
+        help="solutions max depth (default: 5)",
     )
     parser.add_argument(
         "--uniform", action="store_true", default=False, help="use uniform PCFGs"
@@ -73,7 +79,8 @@ if __name__ == "__main__":
     grids: int = parameters.grids
     width: int = parameters.width
     height: int = parameters.height
-    max_depth: int = parameters.max_operations
+    max_depth: int = parameters.max_depth
+    min_size: int = parameters.min_operations
     gen_dataset_size: int = parameters.size
     uniform: bool = parameters.uniform
     verbose: bool = parameters.verbose
@@ -116,8 +123,10 @@ if __name__ == "__main__":
             program = pcfg.sample_program()
             mapped = []
             i = 0
-            while program in generated or is_id(
-                worlds, compute_outputs(program, worlds, mapped)
+            while (
+                program in generated
+                or program.size() <= min_size
+                or is_id(worlds, compute_outputs(program, worlds, mapped))
             ):
                 program = pcfg.sample_program()
                 mapped.clear()
