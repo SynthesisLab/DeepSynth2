@@ -123,7 +123,7 @@ class DSLEvaluator(Evaluator):
             elif isinstance(program, Constant):
                 return program.value
             elif isinstance(program, Function):
-                fun = self.semantics[program.function]
+                fun = self.semantics[program.function]  # type: ignore
                 for arg in program.arguments:
                     fun = fun(self.__eval_no_cache(arg, input))
                 return fun
