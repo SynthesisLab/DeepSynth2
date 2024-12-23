@@ -180,7 +180,9 @@ for i in range(3, 10):
 
 dsl = DSL(__syntax)
 dsl.instantiate_polymorphic_types(3)
-evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
+evaluator = DSLEvaluator(
+    dsl.instantiate_semantics(__semantics), use_cache=False, subtree_cache=False
+)
 lexicon = []
 
 
