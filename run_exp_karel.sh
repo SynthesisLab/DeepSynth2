@@ -2,7 +2,7 @@
 NAME="karel"
 DFTAS="automatic"
 DFTA_SUFFIX="_dfta_filter_karel.py"
-TASKS=500
+TASKS=100
 
 
 function abort_on_failure(){
