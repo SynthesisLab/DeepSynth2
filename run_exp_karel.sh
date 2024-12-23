@@ -48,7 +48,7 @@ gen_dfta
 gen_dataset 1
 for DFTA in $DFTAS
 do
-    run_exp 1 $DFTA &
+    run_exp 1 $DFTA
 done
-run_exp 1 &
+run_exp 1
 wait
