@@ -133,7 +133,7 @@ stats = [
 ]
 
 
-def print_search_state():
+def log_data():
     best_program, q_value, incertitude, mini, maxi = evaluator.get_best_stats()
 
     stats.append(
@@ -146,6 +146,9 @@ def print_search_state():
             maxi,
         )
     )
+
+
+def print_search_state():
     total = counter.get("programs.iterated").total
     print()
     print(
@@ -244,8 +247,10 @@ while True:
     # print("PROGRAM:", program)
     counter.count("programs.iterated", 1)
     iterated = counter.get("programs.iterated").total
-    if iterated % 100 == 0 and iterated > 0:
-        print_search_state()
+    if iterated % 20 == 0 and iterated > 0:
+        log_data()
+        if iterated % 100 == 0 and iterated > 0:
+            print_search_state()
     copy = program.clone()
     tiles = None
     returns = []
@@ -271,5 +276,6 @@ while True:
         if ejected and ejected != copy:
             print_best_program()
             if is_solved():
+                log_data()
                 print("SOLVED" + "=" * 60)
                 break
