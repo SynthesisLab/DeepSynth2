@@ -3,6 +3,8 @@ from karel import KarelWorld
 
 import numpy as np
 
+from synth.utils.import_utils import import_file_function
+
 
 def random_world(
     width: int, height: int, rng: Optional[np.random.Generator] = None
@@ -73,6 +75,12 @@ if __name__ == "__main__":
         default=False,
         help="verbose generation",
     )
+    parser.add_argument(
+        "--filter",
+        nargs="*",
+        type=str,
+        help="load the given files and call their get_filter functions to get a Filter[Program]",
+    )
     parameters = parser.parse_args()
     output_file: str = parameters.output
     seed: int = parameters.seed
@@ -84,10 +92,29 @@ if __name__ == "__main__":
     gen_dataset_size: int = parameters.size
     uniform: bool = parameters.uniform
     verbose: bool = parameters.verbose
+    filter_files: List[str] = parameters.filter or []
+
+    tr = auto_type("world -> world")
+    filter_pot_funs = [
+        import_file_function(file[:-3].replace("/", "."), ["get_filter"])().get_filter
+        for file in filter_files
+    ]
+    filters = [
+        f(
+            tr,
+            set(),
+        )
+        for f in filter_pot_funs
+    ]
+    final_filter = None
+    for filter in filters:
+        final_filter = (
+            filter if final_filter is None else final_filter.intersection(filter)
+        )
+
     # ================================
     # Task Generator
     # ================================
-    tr = auto_type("world -> world")
     print("Generating dataset...", gen_dataset_size, end="", flush=True)
     with chrono.clock("dataset.generate") as c:
         cfg = CFG.depth_constraint(dsl, tr, max_depth)
@@ -126,6 +153,7 @@ if __name__ == "__main__":
             while (
                 program in generated
                 or program.size() <= min_size
+                or (final_filter is not None and not final_filter.accept(program))
                 or is_id(worlds, compute_outputs(program, worlds, mapped))
             ):
                 program = pcfg.sample_program()
