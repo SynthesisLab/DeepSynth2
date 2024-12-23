@@ -104,6 +104,15 @@ class KarelWorld:
         out[self.karel] += 8
         return tuple(tuple(x) for x in out)
 
+    def __eq__(self, other: "KarelWorld") -> bool:
+        return (
+            self.karel == other.karel
+            and self.direction == other.direction
+            and np.all(self.grid == other.grid)
+            and np.all(self.markers == other.markers)
+            and np.all(self.current_markers == other.current_markers)
+        )
+
     def show(self) -> None:
         plt.figure()
 

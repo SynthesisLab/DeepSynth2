@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from karel import KarelWorld
 
 import numpy as np
@@ -97,24 +97,37 @@ if __name__ == "__main__":
         tasks = []
         pbar = tqdm.tqdm(total=gen_dataset_size, desc="tasks generated")
         generated = set()
+
+        def compute_outputs(
+            program, worlds: List[KarelWorld], mapped: List[KarelWorld]
+        ):
+            for world in worlds:
+                mapped.append(evaluator.eval(program, [world]))
+            return mapped
+
+        def is_id(worlds: List[KarelWorld], output: List[KarelWorld]) -> bool:
+            for w, o in zip(worlds, output):
+                if w != o:
+                    return False
+            return True
+
         for __ in range(gen_dataset_size):
             worlds = [random_world(width, height, rng) for _ in range(grids)]
             program = pcfg.sample_program()
+            mapped = []
             i = 0
-            while program in generated:
+            while program in generated or is_id(
+                worlds, compute_outputs(program, worlds, mapped)
+            ):
                 program = pcfg.sample_program()
+                mapped.clear()
                 i += 1
-                assert (
-                    i < 10000
-                ), f"Grammar is likely too shallow to only generate unique programs"
+                if i > 100:
+                    worlds = [random_world(width, height, rng) for _ in range(grids)]
+
             task = Task(
                 tr,
-                PBE(
-                    [
-                        Example([worlds[i]], evaluator.eval(program, [worlds[i]]))
-                        for i in range(grids)
-                    ]
-                ),
+                PBE([Example([worlds[i]], mapped[i]) for i in range(grids)]),
                 program,
             )
             pbar.update(1)
