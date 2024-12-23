@@ -21,6 +21,15 @@ class KarelWorld:
         self.markers = np.zeros_like(self.grid)
         self.reset()
 
+    def copy(self) -> "KarelWorld":
+        other = KarelWorld(self.grid.shape[0], self.grid.shape[1])
+        other.grid = self.grid.copy()
+        other.markers = self.markers.copy()
+        other.current_markers = self.current_markers.copy()
+        other.karel = self.karel
+        other.direction = self.direction
+        return other
+
     def reset(self) -> None:
         self.karel = (0, 0)
         self.current_markers = self.markers.copy()
@@ -180,9 +189,17 @@ for i in range(3, 10):
 
 dsl = DSL(__syntax)
 dsl.instantiate_polymorphic_types(3)
-evaluator = DSLEvaluator(
-    dsl.instantiate_semantics(__semantics), use_cache=False, subtree_cache=False
-)
+
+
+class KarelEvaluator(DSLEvaluator):
+    def __init__(self, semantics):
+        super().__init__(semantics, False, False)
+
+    def eval(self, program, input):
+        return super().eval(program, [input[0].copy()])
+
+
+evaluator = KarelEvaluator(dsl.instantiate_semantics(__semantics))
 lexicon = []
 
 
