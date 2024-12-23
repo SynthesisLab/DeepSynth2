@@ -306,7 +306,7 @@ def load_pcfgs(
         constant_types = set()
         if isinstance(task.specification, PBEWithConstants):
             constant_types = set(task.specification.constants.keys())
-        g = CFG.infinite(dsl, task.type_request, 1, constant_types=constant_types)
+        g = CFG.infinite(dsl, task.type_request, 2, constant_types=constant_types)
         pcfgs.append(ProbDetGrammar.uniform(g))
     return pcfgs
 
