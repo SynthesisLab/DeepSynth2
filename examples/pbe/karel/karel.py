@@ -150,7 +150,7 @@ __syntax = auto_type(
 
 def __while(w: KarelWorld, c, s) -> KarelWorld:
     n = 0
-    while c(w) and n < 10000:
+    while c(w) and n < 1000:
         w = s(w)
         n += 1
     return w
