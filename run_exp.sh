@@ -1,7 +1,7 @@
 #!/bin/bash
 NAME="$1"
 ENV="$2"
-DFTAS="automatic manual"
+DFTAS="automatic"
 DFTA_SUFFIX="_dfta_filter_control.py"
 SEEDS="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"
 
@@ -11,6 +11,12 @@ function abort_on_failure(){
         echo "An error has occured"
         exit 1
     fi
+}
+
+function gen_dfta(){
+    python examples/rl/dsl_equation_generator.py -s $1 --n 1000
+    python examples/rl/equivalence_classes_to_filter.py equivalent_classes_control.json
+    mv dfta_filter_control.py automatic_dfta_filter_control.py
 }
 
 function run_exp(){
@@ -32,9 +38,11 @@ fi
 
 for SEED in $SEEDS
 do
-    run_exp $SEED
+    gen_dfta $SEED
     for DFTA in $DFTAS
     do
-        run_exp $SEED $DFTA
+        run_exp $SEED $DFTA &
     done
+    run_exp $SEED &
+    wait
 done
