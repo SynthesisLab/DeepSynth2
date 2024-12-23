@@ -141,7 +141,7 @@ __syntax = auto_type(
         "markersPresent": "world -> bool",
         "noMarkersPresent": "world -> bool",
         "not": "'a [bool | (world -> bool)] -> 'a [bool | (world -> bool)]",
-        "ite": "bool -> (world -> world) -> (world -> world) -> (world -> world)",
+        "ite": "(world -> bool) -> (world -> world) -> (world -> world) -> (world -> world)",
         "repeat": "int -> (world -> world) -> (world -> world)",
         "while": "(world -> bool) -> (world -> world) -> (world -> world)",
     }
