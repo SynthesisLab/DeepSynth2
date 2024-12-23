@@ -265,6 +265,8 @@ def check_equivalent() -> None:
             if program in programs_done:
                 continue
             used = program.used_variables()
+            if not isinstance(program, Function) or program.function.type != ftype:
+                continue
             if len(used) == 1 and 0 not in used:
                 continue
             is_constant, is_identity, candidates, my_outputs = check_program(
