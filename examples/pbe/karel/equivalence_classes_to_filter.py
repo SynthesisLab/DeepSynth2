@@ -426,7 +426,6 @@ if __name__ == "__main__":
     comment: bool = parameters.comment
     output_file: str = parameters.output.format(dsl="karel")
 
-
     with open(data_file) as fd:
         dico = json.load(fd)
         classes = dico["classes"]
