@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # ================================
     # Task Generator
     # ================================
-    tr = auto_type("world -> result")
+    tr = auto_type("world -> world")
     print("Generating dataset...", gen_dataset_size, end="", flush=True)
     with chrono.clock("dataset.generate") as c:
         cfg = CFG.depth_constraint(dsl, tr, max_depth)
@@ -107,7 +107,6 @@ if __name__ == "__main__":
                 assert (
                     i < 10000
                 ), f"Grammar is likely too shallow to only generate unique programs"
-
             task = Task(
                 tr,
                 PBE(
