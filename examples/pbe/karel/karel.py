@@ -169,7 +169,7 @@ __semantics = {
     "markersPresent": lambda w: w.eval("markersPresent"),
     "noMarkersPresent": lambda w: w.eval("noMarkersPresent"),
     "not": lambda c: not c if isinstance(c, bool) else lambda w: not c(w),
-    "if": lambda c: lambda ifblock: lambda elseblock: ifblock if c else elseblock,
+    "ite": lambda c: lambda ifblock: lambda elseblock: ifblock if c else elseblock,
     "repeat": lambda n: lambda s: lambda w: [s(w) for _ in range(n)][-1],
     "while": lambda c: lambda s: lambda w: __while(w, c, s),
 }
