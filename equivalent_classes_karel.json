@@ -1,0 +1,66 @@
+{
+    "classes": [
+        [
+            "var0",
+            "(noMarkersPresent (turnLeft var0))",
+            "(not (markersPresent var0))",
+            "(noMarkersPresent (turnRight var0))"
+        ],
+        [
+            "(markersPresent (turnLeft var0))",
+            "(markersPresent (turnRight var0))",
+            "var0",
+            "(not (noMarkersPresent var0))"
+        ],
+        [
+            "(then var0 (then var1 var2))",
+            "(then (then var0 var1) var2)"
+        ],
+        [
+            "(pickMarker (turnRight var0))",
+            "var0",
+            "(pickMarker (turnLeft var0))",
+            "(then turnLeft pickMarker var0)",
+            "(then turnRight pickMarker var0)"
+        ],
+        [
+            "(putMarker (turnRight var0))",
+            "var0",
+            "(putMarker (turnLeft var0))",
+            "(then turnLeft putMarker var0)",
+            "(then turnRight putMarker var0)"
+        ],
+        [
+            "(ite var0 var2 var1)",
+            "(ite (not var0) var1 var2)"
+        ],
+        [
+            "(markersPresent (putMarker var0))",
+            "(markersPresent (pickMarker var0))",
+            "(noMarkersPresent (pickMarker var0))",
+            "(noMarkersPresent (putMarker var0))",
+            "var0"
+        ],
+        [
+            "(frontIsClear (putMarker var0))",
+            "(frontIsClear (pickMarker var0))",
+            "(leftIsClear (putMarker var0))",
+            "(leftIsClear (pickMarker var0))",
+            "(rightIsClear (putMarker var0))",
+            "(rightIsClear (pickMarker var0))",
+            "var0"
+        ],
+        [
+            "(turnRight (turnLeft var0))",
+            "(turnLeft (turnRight var0))",
+            "(pickMarker (putMarker var0))",
+            "(not (not var0))",
+            "(while var0 (while var1 var2 var3) var4)",
+            "(repeat var0 (repeat var1 var2 var3) var4)",
+            "var0"
+        ]
+    ],
+    "commutatives": [],
+    "identities": [],
+    "constants": []
+}
