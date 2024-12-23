@@ -79,7 +79,7 @@ for ydata in list(__DATA__.keys()):
             __DATA__[xdata],
             __DATA__[ydata],
             cumulative=False,
-            logy=xdata == "non_terminals",
+            ylim=(None, None),
         )
 
 if __name__ == "__main__":
