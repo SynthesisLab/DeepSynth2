@@ -36,7 +36,7 @@ function run_exp(){
             arg=""
         fi
         python examples/pbe/solve.py --dsl karel -d karel/dataset.pickle --solver cutoff --search beap_search -o karel/ $arg
-        mv karel/dataset_cd_search_uniform_cutoff.csv $filename
+        mv karel/dataset_beap_search_uniform_cutoff.csv $filename
     fi
 }
 
