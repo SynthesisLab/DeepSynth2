@@ -29,7 +29,7 @@ function gen_dataset(){
 function run_exp(){
     seed=$1
     dfta=$2
-    filename="$NAME/${dfta}_$seed.csv"
+    filename="$NAME/dataset_seed_${seed}_beap_search_uniform_${dfta}.csv"
     if [ ! -f "$filename" ]; then
         arg="--filter ${dfta}$DFTA_SUFFIX"
         if [[ -z "$dfta" ]]; then
