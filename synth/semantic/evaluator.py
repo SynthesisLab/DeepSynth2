@@ -25,13 +25,19 @@ def __tuplify__(element: Any) -> Any:
 
 
 class DSLEvaluator(Evaluator):
-    def __init__(self, semantics: Dict[Primitive, Any], use_cache: bool = True) -> None:
+    def __init__(
+        self,
+        semantics: Dict[Primitive, Any],
+        use_cache: bool = True,
+        subtree_cache: bool = True,
+    ) -> None:
         super().__init__()
         self.semantics = semantics
         self.use_cache = use_cache
         self._cache: Dict[Any, Dict[Program, Any]] = {}
         self._cons_cache: Dict[Any, Dict[Program, Any]] = {}
         self.skip_exceptions: Set[Exception] = set()
+        self.subtree_cache = use_cache or subtree_cache
         # Statistics
         self._total_requests = 0
         self._cache_hits = 0
@@ -74,6 +80,8 @@ class DSLEvaluator(Evaluator):
             return program
 
     def eval(self, program: Program, input: List) -> Any:
+        if not self.subtree_cache:
+            return self.__eval_no_cache(program, input)
         key = __tuplify__(input)
         if self.use_cache and key not in self._cache:
             self._cache[key] = {}
@@ -105,6 +113,27 @@ class DSLEvaluator(Evaluator):
                 raise e
 
         return evaluations[program]
+
+    def __eval_no_cache(self, program: Program, input: List) -> Any:
+        try:
+            if isinstance(program, Primitive):
+                return self.semantics[program]
+            elif isinstance(program, Variable):
+                return input[program.variable]
+            elif isinstance(program, Constant):
+                return program.value
+            elif isinstance(program, Function):
+                fun = self.semantics[program.function]
+                for arg in program.arguments:
+                    fun = fun(self.__eval_no_cache(arg, input))
+                return fun
+        except Exception as e:
+            if type(e) in self.skip_exceptions:
+                return None
+            else:
+                raise e
+
+        return None
 
     def clear_cache(self) -> None:
         self._cache = {}
