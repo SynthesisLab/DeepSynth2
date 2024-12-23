@@ -305,30 +305,39 @@ class FiltersBuilder:
         dsl: DSL, constant_types: Set[Type], allow_constant_expressions: bool = False
     ) -> "FiltersBuilder":
         primitives = dsl.list_primitives
-        primitive2state: Dict[Primitive, Tuple[Type, Primitive]] = {}
         rules: Dict[
             Tuple[DerivableProgram, Tuple[Tuple[Type, DerivableProgram], ...]],
             Tuple[Type, DerivableProgram],
         ] = {}
-        for primitive in primitives:
-            primitive2state[primitive] = (primitive.type.returns(), primitive)
-        for primitive in primitives:
-            args_possibles = []
-            for arg_type in primitive.type.arguments():
-                to_add = [
-                    primitive2state[p]
-                    for p in primitive2state.keys()
-                    if p.type.returns() == arg_type
-                ] + [(uk, Variable(0, uk))]
-                if arg_type in constant_types:
-                    to_add += [(arg_type, Constant(arg_type))]
-                args_possibles.append(to_add)
-            for arg_comb in itertools.product(*args_possibles):
-                if not allow_constant_expressions and all(
-                    isinstance(arg[1], Constant) for arg in arg_comb
-                ):
-                    continue
-                rules[(primitive, tuple(arg_comb))] = primitive2state[primitive]
+        all_types = []
+        done_types = set()
+        for prim in primitives:
+            t = prim.type.returns()
+            if t not in done_types:
+                all_types.append(t)
+                done_types.add(t)
+        while all_types:
+            t = all_types.pop()
+            for P in primitives:
+                args_P = P.type.ends_with(t)
+                if P.type == t:
+                    rules[(P, tuple())] = (t, P)
+                elif args_P is not None:
+                    args = []
+                    for arg in args_P:
+                        if arg not in done_types:
+                            all_types.append(arg)
+                            done_types.add(arg)
+                        possibles = []
+                        for pp in primitives:
+                            if pp.type.ends_with(arg) is not None or pp.type == arg:
+                                possibles.append((arg, pp))
+                        if arg == auto_type("world"):
+                            possibles.append((uk, Variable(0, uk)))
+                        args.append(possibles)
+                    for arg_comb in itertools.product(*args):
+                        rules[(P, arg_comb)] = (t, P)
+
         rules[(Variable(0, uk), tuple())] = (uk, Variable(0, uk))
         for type in constant_types:
             rules[(Constant(type), tuple())] = (type, Constant(type))
