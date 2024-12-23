@@ -108,7 +108,7 @@ filters = [
 final_filter = None
 for filter in filters:
     final_filter = filter if final_filter is None else final_filter.intersection(filter)
-cfg = CFG.infinite(dsl, type_request, n_gram=1, constant_types=constant_types)
+cfg = CFG.infinite(dsl, type_request, n_gram=2, constant_types=constant_types)
 pcfg = ProbDetGrammar.uniform(cfg)
 # enumerator = enumerate_programs(pcfg, precision=1e-2)
 enumerator = enumerate_programs(pcfg)
