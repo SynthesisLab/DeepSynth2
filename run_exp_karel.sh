@@ -21,7 +21,7 @@ function gen_dfta(){
 function gen_dataset(){
     file="./$NAME/dataset.pickle"
     if [ ! -f "$file" ]; then
-        python examples/pbe/karel/karel_task_generator.py -o $file -s $1 -w 10 --height 10 -g 3 --size $TASKS --max-operations 5 --uniform
+        python examples/pbe/karel/karel_task_generator.py -o $file -s $1 -w 10 --height 10 -g 4 --size $TASKS --max-depth 6 --min-operations 6 --uniform
 
     fi
 }
