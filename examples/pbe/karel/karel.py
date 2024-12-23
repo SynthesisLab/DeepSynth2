@@ -178,9 +178,7 @@ for i in range(3, 10):
     __syntax[str(i)] = auto_type("int")
     __semantics[str(i)] = i
 
-__forbidden_patterns = {("not", 0): {"not", "markersPresent"}, ("then", 0): {"then"}}
-
-dsl = DSL(__syntax, __forbidden_patterns)
+dsl = DSL(__syntax)
 dsl.instantiate_polymorphic_types(3)
 evaluator = DSLEvaluator(dsl.instantiate_semantics(__semantics))
 lexicon = []
