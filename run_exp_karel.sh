@@ -35,7 +35,7 @@ function run_exp(){
         if [[ -z "$dfta" ]]; then
             arg=""
         fi
-        python examples/pbe/solve.py --dsl karel -d karel/dataset.pickle --solver cutoff --search beap_search -o karel/ $arg
+        python examples/pbe/solve.py --dsl karel -d karel/dataset.pickle --solver cutoff --search beap_search -t 60 -o karel/ $arg
         mv karel/dataset_beap_search_uniform_cutoff.csv $filename
     fi
 }
