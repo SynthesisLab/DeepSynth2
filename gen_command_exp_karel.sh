@@ -5,7 +5,7 @@ DFTA_SUFFIX="_dfta_filter_karel.py"
 TASKS=100
 
 function gen_dfta(){
-    python examples/pbe/karel/equivalence_classes_to_filter.py equivalent_classes_karel.json -c -v
+    python examples/pbe/karel/equivalence_classes_to_filter.py equivalent_classes_karel.json -c -v > /dev/null
     mv dfta_filter_karel.py automatic_dfta_filter_karel.py
 }
 function gen_dataset(){
