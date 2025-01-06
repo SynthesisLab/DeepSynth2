@@ -124,6 +124,9 @@ class Program(ABC):
     def __pickle__(o: "Program") -> Tuple:
         pass
 
+    def type_checks(self) -> bool:
+        return True
+
 
 class Variable(Program):
     """
@@ -270,6 +273,12 @@ class Function(Program):
             for arg in self.arguments:
                 s += " " + format(arg)
             return s + ")"
+
+    def type_checks(self) -> bool:
+        return all(
+            arg.type.is_instance(f_arg_t)
+            for arg, f_arg_t in zip(self.arguments, self.function.type.arguments())
+        )
 
     def __pretty_print__(
         self,
