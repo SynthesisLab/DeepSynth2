@@ -1,4 +1,5 @@
 import copy
+import itertools
 from typing import Any, Callable, Dict, Mapping, Optional, List as TList, Set, Tuple
 from synth.syntax.type_helper import FunctionType
 
@@ -123,23 +124,49 @@ class DSL:
         -----------
         A parsed program that matches the given string
         """
-        return self.__fix_types__(program)
+        return self.__fix_types__(program)[0]
 
     def __fix_types__(
-        self, program: Program, forced_type: Optional[Type] = None
-    ) -> Program:
+        self,
+        program: Program,
+        forced_type: Optional[Type] = None,
+        force_fix: bool = False,
+    ) -> Tuple[Program, bool]:
+        is_ambiguous = False
         if isinstance(program, Function):
-            fixed_fun = self.__fix_types__(program.function)
-            out: Program = Function(
-                fixed_fun,
-                [
-                    self.__fix_types__(arg, arg_type)
+            fixed_fun, ambiguous = self.__fix_types__(
+                program.function, force_fix=force_fix
+            )
+            args = [
+                self.__fix_types__(arg, arg_type)[0]
+                for arg, arg_type in zip(program.arguments, fixed_fun.type.arguments())
+            ]
+
+            if ambiguous and forced_type is not None:
+                print(
+                    "before:",
+                    fixed_fun,
+                    "type:",
+                    fixed_fun.type,
+                    "args:",
+                    args,
+                    "target:",
+                    FunctionType(*([arg.type for arg in args] + [forced_type])),
+                )
+                fixed_fun = self.__fix_types__(
+                    program.function,
+                    FunctionType(*[arg.type for arg in args], forced_type),
+                    force_fix=force_fix,
+                )[0]
+                print("after:", fixed_fun, "type:", fixed_fun.type)
+                args = [
+                    self.__fix_types__(arg, arg_type, force_fix=force_fix)[0]
                     for arg, arg_type in zip(
                         program.arguments, fixed_fun.type.arguments()
                     )
-                ],
-            )
-        elif not program.type.is_under_specified():
+                ]
+            out: Program = Function(fixed_fun, args)
+        elif not force_fix and not program.type.is_under_specified():
             out = program
         elif isinstance(program, Variable):
             out = Variable(program.variable, forced_type or program.type)
@@ -155,11 +182,12 @@ class DSL:
                 if len(matching) == 1:
                     forced_type = matching[0].type
                 elif len(matching) > 1:
+                    is_ambiguous = True
                     forced_type = Sum(*list(map(lambda x: x.type, matching)))
             out = Primitive(program.primitive, forced_type or program.type)
         else:
             assert False, "no implemented"
-        return out
+        return out, is_ambiguous
 
     def auto_parse_program(
         self,
@@ -189,31 +217,19 @@ class DSL:
         tr = FunctionType(*[UnknownType()] * (nvars + 1))
         return self.fix_types(self.parse_program(program, tr, constants, False))
 
-    def parse_program(
+    def __parse_program__(
         self,
         program: str,
         type_request: Type,
         constants: Dict[str, Tuple[Type, Any]] = {},
-        check: bool = True,
-    ) -> Program:
+    ) -> TList[Program]:
         """
-        Parse a program from its string representation given the type request.
-
-        Parameters:
-        -----------
-        - program: the string representation of the program, i.e. str(prog)
-        - type_request: the type of the requested program in order to identify variable types
-        - constants: str representation of constants that map to their (type, value)
-        - check: ensure the program was correctly parsed
-
-        Returns:
-        -----------
-        A parsed program that matches the given string
+        Produce all possible interpretations of a parsed program.
         """
         if " " in program:
             parts = list(
                 map(
-                    lambda p: self.parse_program(p, type_request, constants, check),
+                    lambda p: self.__parse_program__(p, type_request, constants),
                     program.split(" "),
                 )
             )
@@ -234,44 +250,81 @@ class DSL:
                     end += 1
                     levels.pop()
 
-            def parse_stack(l: TList[Program], function_calls: TList[int]) -> Program:
-                if len(l) == 1:
-                    return l[0]
-                current = l.pop(0)
-                f_call = function_calls.pop(0)
-                if current.type.is_instance(Arrow) and f_call > 0:
-                    args = [
-                        parse_stack(l, function_calls)
-                        for _ in current.type.arguments()[:f_call]
-                    ]
-                    return Function(current, args)
-                return current
+            n = len(parts)
 
-            sol = parse_stack(parts, function_calls)
-            if check:
-                str_repr = str(sol)
-                for ori, (__, rep) in constants.items():
-                    str_repr = str_repr.replace(f" {rep} ", f" {ori} ")
-                    str_repr = str_repr.replace(f" {rep})", f" {ori})")
-                assert (
-                    str_repr == program
-                ), f"Failed parsing:\n{program}\n\tgot:\n{str_repr}\n\ttype request:{type_request} obtained:{sol.type}"
-            return sol
+            def parse_stack(i: int) -> TList[Tuple[Program, int]]:
+                if i + 1 == n:
+                    return [(p, n) for p in parts[-1]]
+                current = parts[i]
+                f_call = function_calls[i]
+                out: TList[Tuple[Program, int]] = []
+                for some in current:
+                    if some.type.is_instance(Arrow) and f_call > 0:
+                        poss_args: TList[Tuple[TList[Program], int]] = [([], i + 1)]
+                        for _ in some.type.arguments()[:f_call]:
+                            next = []
+                            for poss, j in poss_args:
+                                parsed = parse_stack(j)
+                                for x, k in parsed:
+                                    next.append((poss + [x], k))
+                            poss_args = next
+
+                        for poss, j in poss_args:
+                            out.append((Function(some, list(poss)), j))
+                    else:
+                        out.append((some, i + 1))
+                return out
+
+            sols = parse_stack(0)
+
+            return [p for p, _ in sols]
         else:
             program = program.strip("()")
-            for P in self.list_primitives:
-                if P.primitive == program:
-                    return P
-            if program.startswith("var"):
+            matching: TList[Program] = [
+                P for P in self.list_primitives if P.primitive == program
+            ]
+            if len(matching) > 0:
+                return matching
+            elif program.startswith("var"):
                 varno = int(program[3:])
                 vart = type_request
                 if type_request.is_instance(Arrow):
                     vart = type_request.arguments()[varno]
-                return Variable(varno, vart)
+                return [Variable(varno, vart)]
             elif program in constants:
                 t, val = constants[program]
-                return Constant(t, val, True)
+                return [Constant(t, val, True)]
             assert False, f"can't parse: '{program}'"
+
+    def parse_program(
+        self,
+        program: str,
+        type_request: Type,
+        constants: Dict[str, Tuple[Type, Any]] = {},
+        check: bool = True,
+    ) -> Program:
+        """
+        Parse a program from its string representation given the type request.
+
+        Parameters:
+        -----------
+        - program: the string representation of the program, i.e. str(prog)
+        - type_request: the type of the requested program in order to identify variable types
+        - constants: str representation of constants that map to their (type, value)
+        - check: ensure the program was correctly parsed with type checking
+
+        Returns:
+        -----------
+        A parsed program that matches the given string
+        """
+        possibles = self.__parse_program__(program, type_request, constants)
+        if check:
+            coherents = [p for p in possibles if p.type_checks()]
+            assert (
+                len(coherents) > 0
+            ), f"failed to parse a program that type checks for: {program}"
+            return coherents[0]
+        return possibles[0]
 
     def get_primitive(self, name: str) -> Optional[Primitive]:
         """
