@@ -42,6 +42,7 @@ class TaggedDetGrammar(DetGrammar[U, V, W], Generic[T, U, V, W]):
         super().__init__(grammar.start, grammar.rules, clean=False)
         self.grammar = grammar
         self.tags = tags
+        self.type_request = grammar.type_request
 
     def programs(self) -> int:
         return self.grammar.programs()
