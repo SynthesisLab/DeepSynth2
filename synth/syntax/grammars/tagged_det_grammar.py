@@ -253,8 +253,14 @@ class ProbDetGrammar(TaggedDetGrammar[float, U, V, W]):
 
     @classmethod
     def pcfg_from_samples(
-        cls, cfg: "CFG", samples: Iterable[Program]
+        cls, cfg: "CFG", samples: Iterable[Program], remove_zero_rules: bool = False
     ) -> "ProbDetGrammar[Tuple[CFGState, NoneType], Tuple[List[Tuple[Type, CFGState]], NoneType], List[Tuple[Type, CFGState]]]":
+        """
+        Produces the PCFG whose distribution is the mean distribution over the samples.
+
+        Rules with probability zero are not removed unless remove_zero_rules is True.
+
+        """
         rules_cnt: Dict[CFGNonTerminal, Dict[DerivableProgram, int]] = {}
         for S in cfg.rules:
             rules_cnt[S] = {}
@@ -287,9 +293,14 @@ class ProbDetGrammar(TaggedDetGrammar[float, U, V, W]):
         probabilities: Dict[CFGNonTerminal, Dict[DerivableProgram, float]] = {}
         for S in cfg.rules:
             total = sum(rules_cnt[S][P] for P in cfg.rules[S])
-            if total > 0:
-                probabilities[S] = {}
-                for P in rules_cnt[S]:
-                    probabilities[S][P] = rules_cnt[S][P] / total
+            if total <= 0:
+                if remove_zero_rules:
+                    continue
+                total = 1
+            probabilities[S] = {}
+            for P in rules_cnt[S]:
+                val = rules_cnt[S].get(P, 0)
+                if val > 0 or not remove_zero_rules:
+                    probabilities[S][P] = val / total
 
         return ProbDetGrammar(cfg, probabilities)
