@@ -2,6 +2,8 @@ import atexit
 import argparse
 import sys
 import json
+import csv
+
 from typing import Dict, List
 
 import numpy as np
@@ -146,6 +148,8 @@ def log_data():
             maxi,
         )
     )
+    with open(output_file, "w") as fd:
+        csv.writer(fd).writerows(stats)
 
 
 def print_search_state():
@@ -229,7 +233,6 @@ def at_exit():
     print_search_state()
     print("=" * 60)
     print_best_program()
-    import csv
 
     with open(output_file, "w") as fd:
         csv.writer(fd).writerows(stats)
