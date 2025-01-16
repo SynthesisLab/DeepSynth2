@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 class MultiArmedBandit:
@@ -50,6 +50,9 @@ class MultiArmedBandit:
         ]
         return np.argmax(best_returns)
 
+    def choose_arm_incertitude(self) -> int:
+        return np.argmin(self._counts)
+
     def best_arm(self) -> int:
         return self._best_arm
 
@@ -80,12 +83,34 @@ class MultiArmedBandit:
             for q_value, inc in zip(self._mean_returns, incertitudes)
         ]
 
-    def best_possible_return(self) -> float:
-        assert np.min(self._counts) > 0
-        incertitudes = [
-            self.c * np.sqrt(np.log(self._time) / count) for count in self._counts
-        ]
-        best_returns = [
-            self._mean_returns[i] + incertitudes[i] for i in range(self.arms)
-        ]
-        return np.max(best_returns)
+    def best_possible_return(self, arm: Optional[int] = None) -> float:
+        if np.min(self._counts) <= 0:
+            return float("inf")
+        if arm is None:
+            incertitudes = [
+                self.c * np.sqrt(np.log(self._time) / count) for count in self._counts
+            ]
+            best_returns = [
+                self._mean_returns[i] + incertitudes[i] for i in range(self.arms)
+            ]
+            return np.max(best_returns)
+        else:
+            return self._mean_returns[arm] + self.c * np.sqrt(
+                np.log(self._time) / self._counts[arm]
+            )
+
+    def worst_possible_return(self, arm: Optional[int] = None) -> float:
+        if np.min(self._counts) > 0:
+            return -float("inf")
+        if arm is None:
+            incertitudes = [
+                self.c * np.sqrt(np.log(self._time) / count) for count in self._counts
+            ]
+            best_returns = [
+                self._mean_returns[i] - incertitudes[i] for i in range(self.arms)
+            ]
+            return np.min(best_returns)
+        else:
+            return self._mean_returns[arm] - self.c * np.sqrt(
+                np.log(self._time) / self._counts[arm]
+            )

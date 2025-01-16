@@ -41,7 +41,7 @@ class CleverEvaluator(Generic[T]):
                 self._arm2candidate.insert(arm, new_candidate)
                 # Add prior experience
                 for arm_return in prior_experience:
-                    self.bandit.add_return(arm, -arm_return)
+                    self.bandit.add_return(arm, arm_return)
                 break
 
         assert new_candidate in self.candidates
@@ -53,13 +53,13 @@ class CleverEvaluator(Generic[T]):
         return ejected_candidate, budget_used
 
     def get_best_stats(self) -> Tuple[T, float, float, float, float]:
-        arm: int = self.bandit.worst_arm()
+        arm: int = self.bandit.best_arm()
         candidate = (
             self._arm2candidate[arm]
             if arm < self._last_ejected
             else self._arm2candidate[arm - 1]
         )
-        best_returns = [-x for x in self.bandit.returns[arm]]
+        best_returns = [x for x in self.bandit.returns[arm]]
         if len(best_returns) == 0:
             return candidate, float("nan"), float("inf"), -float("inf"), float("inf")
         mean_return = sum(best_returns) / len(best_returns)
@@ -72,14 +72,14 @@ class CleverEvaluator(Generic[T]):
         )
 
     def run_at_least(self, min_budget: int, min_score: float = -float("inf")) -> int:
-        arm: int = self.bandit.worst_arm()
+        arm: int = self.bandit.best_arm()
         candidate = (
             self._arm2candidate[arm]
             if arm < self._last_ejected
             else self._arm2candidate[arm - 1]
         )
         budget_used: int = 0
-        sum_ret = sum([-x for x in self.bandit.returns[arm]])
+        sum_ret = sum([x for x in self.bandit.returns[arm]])
         n = len(self.bandit.returns[arm])
         while self.bandit.samples(arm) < min_budget and sum_ret / n >= min_score:
             has_no_error, arm_return = self.get_return(candidate)
@@ -87,9 +87,9 @@ class CleverEvaluator(Generic[T]):
             if not has_no_error:
                 self.bandit.add_return(arm, 1e10)
                 break
-            self.bandit.add_return(arm, -arm_return)
+            self.bandit.add_return(arm, arm_return)
             n += 1
-            sum_ret += -arm_return
+            sum_ret += arm_return
         return budget_used
 
     def __run_until_ejection__(self, max_budget: int) -> Tuple[Optional[T], int]:
@@ -98,19 +98,23 @@ class CleverEvaluator(Generic[T]):
         """
         budget_used: int = 0
         while self.__get_candidate_to_eject__() is None and budget_used < max_budget:
-            arm: int = self.bandit.choose_arm_ucb()
+            arm: int = self.bandit.choose_arm_incertitude()
             candidate: T = self._arm2candidate[arm]
             has_no_error, arm_return = self.get_return(candidate)
             if not has_no_error:
                 self.bandit.add_return(arm, 1e10)
                 return candidate, budget_used
-            self.bandit.add_return(arm, -arm_return)
+            self.bandit.add_return(arm, arm_return)
             budget_used += 1
         return self.__get_candidate_to_eject__(True), budget_used
 
     def __get_candidate_to_eject__(self, force: bool = False) -> Optional[T]:
-        worst_arm = self.bandit.best_arm()
+        worst_arm = self.bandit.worst_arm()
         if force:
+            return self._arm2candidate[worst_arm]
+        if self.bandit.best_possible_return(
+            worst_arm
+        ) < self.bandit.worst_possible_return(self.bandit.best_arm()):
             return self._arm2candidate[worst_arm]
         return_intervals = self.bandit.possible_returns()
         low, high = return_intervals.pop(worst_arm)
