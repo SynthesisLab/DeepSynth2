@@ -28,7 +28,7 @@ verbose: bool = False
 
 def __is_generic__(arg: Program, used_vars: Set[int]) -> bool:
     if isinstance(arg, Variable):
-        if arg.variable in used_vars:
+        if arg.variable in used_vars or arg.variable > len(used_vars):
             return False
         used_vars.add(arg.variable)
         return True
