@@ -71,7 +71,7 @@ class CleverEvaluator(Generic[T]):
             max(best_returns),
         )
 
-    def run_at_least(self, min_budget: int) -> int:
+    def run_at_least(self, min_budget: int, min_score: float = -float("inf")) -> int:
         arm: int = self.bandit.worst_arm()
         candidate = (
             self._arm2candidate[arm]
@@ -79,12 +79,17 @@ class CleverEvaluator(Generic[T]):
             else self._arm2candidate[arm - 1]
         )
         budget_used: int = 0
-        while self.bandit.samples(arm) < min_budget:
-            can_continue, arm_return = self.get_return(candidate)
+        sum_ret = sum([-x for x in self.bandit.returns[arm]])
+        n = len(self.bandit.returns[arm])
+        while self.bandit.samples(arm) < min_budget and sum_ret / n >= min_score:
+            has_no_error, arm_return = self.get_return(candidate)
             budget_used += 1
-            if not can_continue:
+            if not has_no_error:
+                self.bandit.add_return(arm, 1e10)
                 break
             self.bandit.add_return(arm, -arm_return)
+            n += 1
+            sum_ret += -arm_return
         return budget_used
 
     def __run_until_ejection__(self, max_budget: int) -> Tuple[Optional[T], int]:
@@ -95,8 +100,9 @@ class CleverEvaluator(Generic[T]):
         while self.__get_candidate_to_eject__() is None and budget_used < max_budget:
             arm: int = self.bandit.choose_arm_ucb()
             candidate: T = self._arm2candidate[arm]
-            can_continue, arm_return = self.get_return(candidate)
-            if not can_continue:
+            has_no_error, arm_return = self.get_return(candidate)
+            if not has_no_error:
+                self.bandit.add_return(arm, 1e10)
                 return candidate, budget_used
             self.bandit.add_return(arm, -arm_return)
             budget_used += 1

@@ -77,7 +77,7 @@ filter_pot_funs = [
 # =========================================================================
 # GLOBAL PARAMETERS
 # max number of episodes that should be done at most to compare two possiby equal (optimised) candidates
-MAX_BUDGET: int = 40
+MAX_BUDGET: int = 80
 
 np.random.seed(SEED)
 
@@ -220,7 +220,7 @@ def is_solved() -> bool:
     current_best_return = evaluator.get_best_stats()[1]
     if current_best_return >= TARGET_RETURN:
         with chronometer.clock("evaluation.confirm"):
-            budget_used = evaluator.run_at_least(100)
+            budget_used = evaluator.run_at_least(100, TARGET_RETURN)
             counter.count("episodes.confirm", budget_used)
         current_best_return = evaluator.get_best_stats()[1]
         if current_best_return >= TARGET_RETURN:
