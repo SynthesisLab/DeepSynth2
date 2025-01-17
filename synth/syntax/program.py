@@ -229,6 +229,7 @@ class Constant(Program):
         return (
             isinstance(other, Constant)
             and self.type == other.type
+            and self._has_value == other._has_value
             and self.value == other.value
         )
 
