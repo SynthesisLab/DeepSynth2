@@ -258,7 +258,7 @@ class Function(Program):
         super().__init__(my_type)
         self.function = function
         self.arguments = arguments
-        self.hash = hash(tuple([arg for arg in self.arguments] + [self.function]))
+        self.hash = hash((*self.arguments, self.function))
 
     def __pickle__(o: Program) -> Tuple:  # type: ignore[override]
         return Function, (o.function, o.arguments)  # type: ignore
