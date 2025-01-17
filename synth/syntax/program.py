@@ -18,6 +18,11 @@ class Program(ABC):
     def __init__(self, type: Type) -> None:
         self.type = type
         self.hash: int = 0
+        self.refresh_hash()
+
+    @abstractmethod
+    def refresh_hash(self) -> None:
+        pass
 
     def __hash__(self) -> int:
         return self.hash
@@ -138,8 +143,10 @@ class Variable(Program):
     __hash__ = Program.__hash__
 
     def __init__(self, variable: int, type: Type = UnknownType()):
-        super().__init__(type)
         self.variable: int = variable
+        super().__init__(type)
+
+    def refresh_hash(self) -> None:
         self.hash = hash((self.variable, self.type))
 
     def is_invariant(self, constant_types: Set[PrimitiveType]) -> bool:
@@ -178,9 +185,11 @@ class Constant(Program):
     __hash__ = Program.__hash__
 
     def __init__(self, type: Type, value: Any = None, has_value: Optional[bool] = None):
-        super().__init__(type)
         self.value = value
         self._has_value = has_value or value is not None
+        super().__init__(type)
+
+    def refresh_hash(self) -> None:
         self.hash = hash((str(self.value), self._has_value, self.type))
 
     def has_value(self) -> bool:
@@ -255,9 +264,14 @@ class Function(Program):
         args = type.arguments()[len(arguments) :]
         my_type = FunctionType(*args, type.returns())
 
-        super().__init__(my_type)
         self.function = function
         self.arguments = arguments
+        super().__init__(my_type)
+
+    def refresh_hash(self) -> None:
+        self.function.refresh_hash()
+        for x in self.arguments:
+            x.refresh_hash()
         self.hash = hash((*self.arguments, self.function))
 
     def __pickle__(o: Program) -> Tuple:  # type: ignore[override]
@@ -371,8 +385,11 @@ class Lambda(Program):
     __hash__ = Program.__hash__
 
     def __init__(self, body: Program, type: Type = UnknownType()):
-        super().__init__(type)
         self.body = body
+        super().__init__(type)
+
+    def refresh_hash(self) -> None:
+        self.body.refresh_hash()
         self.hash = hash(94135 + hash(self.body))
 
     def clone(self) -> "Program":
@@ -428,8 +445,10 @@ class Primitive(Program):
     __hash__ = Program.__hash__
 
     def __init__(self, primitive: str, type: Type = UnknownType()):
-        super().__init__(type)
         self.primitive = primitive
+        super().__init__(type)
+
+    def refresh_hash(self) -> None:
         self.hash = hash((self.primitive, self.type))
 
     def clone(self) -> "Program":
