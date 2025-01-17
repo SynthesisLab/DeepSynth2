@@ -7,15 +7,16 @@ import csv
 from typing import Dict, List
 
 import numpy as np
+from synth.syntax.program import Program
 
 
 from control_dsl import get_dsl
-import rl.program_eval as program_eval
 from optim.constant_optimizer import ConstantOptimizer
 import stats.chronometer as chronometer
 import stats.counter as counter
-from bandits.clever_evaluator import CleverEvaluator
+from bandits.topk_manager import TopkManager
 from rl.rl_utils import type_for_env
+from program_evaluator import ProgramEvaluator
 
 from synth.syntax import (
     CFG,
@@ -77,14 +78,19 @@ filter_pot_funs = [
 # =========================================================================
 # GLOBAL PARAMETERS
 # max number of episodes that should be done at most to compare two possiby equal (optimised) candidates
-MAX_BUDGET: int = 80
+MAX_BUDGET: int = 50
+MAX_TO_CHECK_SOLVED: int = 2 * MAX_BUDGET
 
-np.random.seed(SEED)
+
+def build_env():
+    env = gym.make(env_name, **env_args)
+    env.reset(seed=SEED)
+    return env
+
 
 # if DERIVATIVE_TIMESTEP > 0:
 #     env = DerivativeObsWrapper(env, DERIVATIVE_TIMESTEP)
-env.reset(seed=SEED)
-type_request = type_for_env(env)
+type_request = type_for_env(build_env())
 print("Requested type:", type_request)
 (
     dsl,
@@ -93,6 +99,7 @@ print("Requested type:", type_request)
     type_request,
     env.action_space,
 )
+evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 
 constant_types = set()
@@ -117,9 +124,7 @@ enumerator = enumerate_programs(pcfg)
 enumerator.filter = final_filter
 
 
-evaluator: CleverEvaluator = CleverEvaluator(
-    program_eval.eval_function(env, prog_evaluator), 2, c=abs(TARGET_RETURN) / 2
-)
+topk: TopkManager = TopkManager(evaluator, c=abs(TARGET_RETURN) / 2)
 const_opti = ConstantOptimizer(SEED)
 
 
@@ -136,7 +141,7 @@ stats = [
 
 
 def log_data():
-    best_program, q_value, incertitude, mini, maxi = evaluator.get_best_stats()
+    best_program, q_value, incertitude, mini, maxi = topk.get_best_stats()
 
     stats.append(
         (
@@ -205,24 +210,26 @@ def print_search_state():
 
 
 def print_best_program():
-    if evaluator.num_candidates() < 1:
+    if topk.num_candidates() < 1:
         print("NO PROGRAM FOUND")
         return
-    best_program, q_value, incertitude, mini, maxi = evaluator.get_best_stats()
+    best_program, q_value, samples, mini, maxi = topk.get_best_stats()
     print("[BEST PROGRAM]\t", best_program)
     # print("\tprobability=", toy_PCFG.probability_program(toy_PCFG.start, original_program))
-    print(f"\treturns: {q_value:.2f}~{incertitude:.2f} [{mini:.2f}; {maxi:.2f}]")
+    print(
+        f"\treturns: {q_value:.2f}(n={samples}, inc={topk.uncertainty(best_program):.2f}) [{mini:.2f}; {maxi:.2f}]"
+    )
 
 
 def is_solved() -> bool:
-    if evaluator.num_candidates() < 1:
+    if topk.num_candidates() < 1:
         return False
-    current_best_return = evaluator.get_best_stats()[1]
+    current_best_return = topk.get_best_stats()[1]
     if current_best_return >= TARGET_RETURN:
         with chronometer.clock("evaluation.confirm"):
-            budget_used = evaluator.run_at_least(100, TARGET_RETURN)
+            budget_used = topk.run_at_least(MAX_TO_CHECK_SOLVED, TARGET_RETURN)
             counter.count("episodes.confirm", budget_used)
-        current_best_return = evaluator.get_best_stats()[1]
+        current_best_return = topk.get_best_stats()[1]
         if current_best_return >= TARGET_RETURN:
             print("[SUCCESSFULLY SOLVED]")
             return True
@@ -236,11 +243,19 @@ def at_exit():
 
     with open(output_file, "w") as fd:
         csv.writer(fd).writerows(stats)
-    # if evaluator.num_candidates() > 0:
-    # program_eval.render_program(env, evaluator.get_best_stats()[0], prog_evaluator)
 
 
 atexit.register(at_exit)
+
+
+def make_eval(program: Program) -> float:
+    def f():
+        program.refresh_hash()
+        evaluator.eval(program)
+        return evaluator.returns(program)[-1]
+
+    return f
+
 
 current_best_return: float = -np.inf
 gen = enumerator.generator()
@@ -258,23 +273,28 @@ while True:
     tiles = None
     returns = []
     if copy.count_constants() > 0:
+        np.random.seed(SEED)
+
         # print("\tprogram:", copy)
         # print("Constant domains:", cst_domains)
+        evaluator.record(False)
         with chronometer.clock("mab"):
             tiles, returns = const_opti.optimize(
-                lambda: program_eval.eval_function(env, prog_evaluator)(copy)[1],
+                make_eval(copy),
                 list(copy.constants()),
             )
         counter.count("programs.optimised", 1)
         counter.count("episodes.constant_opti", const_opti.budget_used)
         for constant, tile in zip(copy.constants(), tiles):
             constant.assign(tile.map(np.random.uniform(0, 1)))
+        evaluator.record(True)
+        copy.refresh_hash()
     counter.count("programs.evaluated", 1)
     with chronometer.clock("evaluation.comparison"):
-        ejected, budget_used = evaluator.challenge_with(
+        ejected, budget_used = topk.challenge_with(
             copy, MAX_BUDGET, prior_experience=returns
         )
-        const_opti.best_return = evaluator.get_best_stats()[1]
+        const_opti.best_return = topk.get_best_stats()[1]
         counter.count("episodes.comparison", budget_used)
         if ejected and ejected != copy:
             print_best_program()

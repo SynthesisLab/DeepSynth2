@@ -14,19 +14,17 @@ class ConstantOptimizer:
         self.c = 0.7
         self.min_budget_per_arm = 15
         self.best_return = 0
-        self._rng = np.random.default_rng(seed)
+        # self._rng = np.random.default_rng(seed)
 
     def optimize(
-        self,
-        eval: Callable[[], float],
-        constants: List[Constant],
+        self, eval: Callable[[], float], constants: List[Constant], **kwargs
     ) -> Tuple[List[Tile], List[List[float]]]:
         self.budget_used = 0
         self._constants = constants
         tiles = [tile_split(-np.inf, np.inf, splits=4) for _ in constants]
         self._eval = eval
         self._can_hope_to_beat_best = True
-        return self._optimize_tiles_(constants, tiles)
+        return self._optimize_tiles_(constants, tiles, **kwargs)
 
     def _pick_values(self) -> List[int]:
         arms = []
@@ -34,7 +32,7 @@ class ConstantOptimizer:
             arm = bandit.choose_arm_ucb()
             arms.append(arm)
             self._constants[index].assign(
-                self._tiles_list[index][arm].map(self._rng.uniform(0, 1))
+                self._tiles_list[index][arm].map(np.random.uniform(0, 1))
             )
         return arms
 
@@ -62,7 +60,7 @@ class ConstantOptimizer:
         constants: List[Constant],
         tiles_list: List[List[Tile]],
         prev_experiences=None,
-        max_total_budget=1500,
+        max_total_budget=1000,
     ) -> Tuple[List[Tile], List[List[float]]]:
         self._constants = constants
         self._tiles_list = tiles_list
