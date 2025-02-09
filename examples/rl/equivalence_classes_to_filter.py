@@ -294,8 +294,10 @@ class FiltersBuilder:
         out += "\tfor i in range(actions):\n"
         out += '\t\tr[(Primitive(f"A{i}", auto_type("action")), tuple())]'
         out += f" = __states[{state2index[(uk, Variable(0, uk))]}]\n"
-        out += "\tfor cst_type in constant_types:\n"
-        out += f"\t\tr[(Constant(cst_type), tuple())] = __states[{state2index[(uk, Variable(0, uk))]}]\n"
+        for a, b in self.dfta.rules:
+            if isinstance(a, Constant):
+                out += f'\tif auto_type("{a.type}") in constant_types:\n'
+                out += f'\t\tr[(Constant(auto_type("{a.type}")), tuple())] = __states[{state2index[(a.type, a)]}]\n'
         out += "\tx: Filter[Program] = DFTAFilter(DFTA(r, set()))\n"
         if len(self.equal_parameters_reject) > 0:
             out += "\ty = LocalStatelessFilter(__should_reject)\n"
