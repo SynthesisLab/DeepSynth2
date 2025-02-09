@@ -109,7 +109,7 @@ def plot_y_wrt_x(
             xdata,
             ydata,
             method.capitalize(),
-            miny=0,
+            miny=ylim[0],
             maxy=data_length if hline_at_length else None,
             cumulative=cumulative,
         )
