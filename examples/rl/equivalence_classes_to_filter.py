@@ -145,9 +145,16 @@ class FiltersBuilder:
             for x in diff:
                 used.add(x[1])
             remap = {var_name: i for i, var_name in enumerate(sorted(used))}
-            self.equal_parameters_reject.add(
-                (program.function, tuple((remap[i], remap[j]) for i, j in diff))
+            checks = tuple(
+                set(
+                    (min((remap[i], remap[j])), max((remap[i], remap[j])))
+                    for i, j in diff
+                    if remap[i] != remap[j]
+                )
             )
+            if len(checks) == 0:
+                return False
+            self.equal_parameters_reject.add((program.function, checks))
             if verbose:
                 print("\tstateless exploit of", program)
             return True
