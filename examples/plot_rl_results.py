@@ -72,11 +72,11 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         max_prog = max(max(x[0] for x in basic), max(x[0] for x in filter))
         max_time = max(max(x[2] for x in basic), max(x[2] for x in filter))
         methods["basic"][seed] = [
-            (x[0] / max_time, x[1] / max_prog, x[2] / max_prog, x[3], x[4], x[5])
+            (x[0] / max_prog, x[1] / max_prog, x[2] / max_time, x[3], x[4], x[5])
             for x in basic
         ]
         methods["filter"][seed] = [
-            (x[0] / max_time, x[1] / max_prog, x[2] / max_prog, x[3], x[4], x[5])
+            (x[0] / max_prog, x[1] / max_prog, x[2] / max_time, x[3], x[4], x[5])
             for x in filter
         ]
         filter_better = 0
