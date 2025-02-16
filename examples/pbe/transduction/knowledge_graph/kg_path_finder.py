@@ -10,7 +10,7 @@ def __make_query_path__(distance: int, id: int, tabs: int = 1) -> str:
         path = __make_query_path__(distance - 1, id, tabs) + "\n"
         path += (
             "\t" * tabs
-        ) + f"?o_{id}_{distance-1} ?p{distance} ?o_{id}_{distance} ."
+        ) + f"?o_{id}_{distance - 1} ?p{distance} ?o_{id}_{distance} ."
         return path
 
 
@@ -52,7 +52,7 @@ def build_count_paths_query(start: str, path: List[str]) -> str:
     sparql_request += " WHERE {\n"
     sparql_request += f"\tw:{__format__(start)} w:{path[0]} ?e0 ."
     for i in range(1, len(path) - 1):
-        sparql_request += f"\t?e{i-1} w:{path[i]} ?e{i} ."
+        sparql_request += f"\t?e{i - 1} w:{path[i]} ?e{i} ."
     sparql_request += f"\t?e{len(path) - 1} w:{path[-1]} ?dst"
     sparql_request += "\n}"
     return sparql_request

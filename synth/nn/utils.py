@@ -132,7 +132,7 @@ def print_model_summary(model: nn.Module) -> None:
         s = str(i)
         first_line = s if "\n" not in s else s[: s.index("\n")]
         t = str(param)
-        print(f"{s[:len(first_line)]:<70}{t:>10}{s[len(first_line):]}")
+        print(f"{s[: len(first_line)]:<70}{t:>10}{s[len(first_line) :]}")
         total_params += param
     print("=" * 80)
     s = "Total Params"

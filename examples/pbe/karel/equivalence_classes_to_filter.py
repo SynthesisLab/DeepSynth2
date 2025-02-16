@@ -365,7 +365,7 @@ def equivalence_classes_to_filters(
         added += builder.add_equivalence_class(this_class)
         if progress:
             pbar.set_postfix_str(
-                f"{F.CYAN}{added}{F.RESET}/{total} constraints ({F.GREEN}{added/total:.1%}{F.RESET})"
+                f"{F.CYAN}{added}{F.RESET}/{total} constraints ({F.GREEN}{added / total:.1%}{F.RESET})"
             )
     builder.compress()
 
@@ -454,7 +454,7 @@ if __name__ == "__main__":
             f"found {F.CYAN}{stats['constraints.successes']}{F.RESET} ({F.GREEN}{stats['constraints.successes'] / stats['constraints.total']:.1%}{F.RESET}) constraints"
         )
         print(
-            f"reduced size to {F.GREEN}{stats['dfta.size.final']/stats['dfta.size.initial']:.1%}{F.RESET} of original size"
+            f"reduced size to {F.GREEN}{stats['dfta.size.final'] / stats['dfta.size.initial']:.1%}{F.RESET} of original size"
         )
     with open(output_file, "w") as fd:
         fd.write(builder.to_code(commented=comment))

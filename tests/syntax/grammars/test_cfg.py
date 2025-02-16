@@ -49,13 +49,13 @@ def test_depth_constraint(max_depth: int) -> None:
     res = dsl.parse_program("(+ 1 var0)", FunctionType(INT, INT))
     print(cfg)
     while res.depth() <= max_depth:
-        assert (
-            res in cfg
-        ), f"Program depth:{res.depth()} should be in the TTCFG max_depth:{max_depth}"
+        assert res in cfg, (
+            f"Program depth:{res.depth()} should be in the TTCFG max_depth:{max_depth}"
+        )
         res = dsl.parse_program(f"(+ {res} var0)", FunctionType(INT, INT))
-    assert (
-        res not in cfg
-    ), f"Program depth:{res.depth()} should NOT be in the TTCFG max_depth:{max_depth}"
+    assert res not in cfg, (
+        f"Program depth:{res.depth()} should NOT be in the TTCFG max_depth:{max_depth}"
+    )
 
 
 def test_infinite() -> None:
@@ -63,7 +63,7 @@ def test_infinite() -> None:
     res = dsl.parse_program("(+ 1 var0)", FunctionType(INT, INT))
     print(cfg)
     while res.depth() <= 30:
-        assert (
-            res in cfg
-        ), f"Program depth:{res.depth()} should be in the infinite TTCFG"
+        assert res in cfg, (
+            f"Program depth:{res.depth()} should be in the infinite TTCFG"
+        )
         res = dsl.parse_program(f"(+ {res} var0)", FunctionType(INT, INT))

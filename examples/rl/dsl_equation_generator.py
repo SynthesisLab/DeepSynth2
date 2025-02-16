@@ -304,7 +304,7 @@ def update_filter(
     builder = equivalence_classes_to_filters(commutatives, classes, dsl)
     if verbose:
         print(
-            f"\tfound {F.YELLOW}{builder.stats['constraints.successes']}{F.RESET} ({F.YELLOW}{builder.stats['constraints.successes']/builder.stats['constraints.total']:.1%}{F.RESET}) constraints"
+            f"\tfound {F.YELLOW}{builder.stats['constraints.successes']}{F.RESET} ({F.YELLOW}{builder.stats['constraints.successes'] / builder.stats['constraints.total']:.1%}{F.RESET}) constraints"
         )
     return (lambda t: builder.get_filter(t, set())), builder.stats
 

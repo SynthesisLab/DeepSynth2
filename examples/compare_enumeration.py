@@ -240,7 +240,7 @@ def gen_distance(non_terminals: int) -> CFG:
         syntax[f"cast{i}"] = f"s{i} -> s1"
         syntax[f"s{i}"] = f"s{i}"
         syntax[f"+{i}"] = f"s1 -> s{i} -> s{i}"
-        syntax[f"*{i}"] = f"s{i-1} -> s{i} -> s{i+1} -> s{i}"
+        syntax[f"*{i}"] = f"s{i - 1} -> s{i} -> s{i + 1} -> s{i}"
     return CFG.infinite(DSL(auto_type(syntax)), auto_type("s1->s1"), n_gram=1)
 
 

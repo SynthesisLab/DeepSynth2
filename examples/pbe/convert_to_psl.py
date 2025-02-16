@@ -61,7 +61,7 @@ for i, task in enumerate(full_dataset.tasks):
         fd.write(f"\n{COMMENT_PREFIX} Function Synthesis\n")
         fd.write("(synth-fun f ")
         for j, arg in enumerate(task.type_request.arguments()):
-            fd.write(f"(x{j+1} {arg}) ")
+            fd.write(f"(x{j + 1} {arg}) ")
         fd.write(f"{task.type_request.returns()})\n")
 
         fd.write(f"\n{COMMENT_PREFIX} PBE Examples\n")

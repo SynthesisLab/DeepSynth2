@@ -51,13 +51,13 @@ def test_size_constraint(max_size: int) -> None:
     size1 = dsl.parse_program("(+ 1 var0)", FunctionType(INT, INT))
     res = size1
     while res.size() <= max_size:
-        assert (
-            res in cfg
-        ), f"Program size:{res.size()} should be in the TTCFG max_size:{max_size}"
+        assert res in cfg, (
+            f"Program size:{res.size()} should be in the TTCFG max_size:{max_size}"
+        )
         res = dsl.parse_program(f"(+ {res} var0)", FunctionType(INT, INT))
-    assert (
-        res not in cfg
-    ), f"Program size:{res.size()} should NOT be in the TTCFG max_size:{max_size}"
+    assert res not in cfg, (
+        f"Program size:{res.size()} should NOT be in the TTCFG max_size:{max_size}"
+    )
 
 
 @pytest.mark.parametrize("max_occ", [3, 4, 5])
@@ -65,13 +65,13 @@ def test_at_most(max_occ: int) -> None:
     cfg = TTCFG.at_most_k(dsl, FunctionType(INT, INT), "+", max_occ)
     res = dsl.parse_program("(+ 1 var0)", FunctionType(INT, INT))
     while res.depth() - 1 <= max_occ:
-        assert (
-            res in cfg
-        ), f"Occurences:{res.depth() - 1} should be in the TTCFG max occurences:{max_occ}"
+        assert res in cfg, (
+            f"Occurences:{res.depth() - 1} should be in the TTCFG max occurences:{max_occ}"
+        )
         res = dsl.parse_program(f"(+ {res} var0)", FunctionType(INT, INT))
-    assert (
-        res not in cfg
-    ), f"Occurences:{res.depth() - 1} should NOT be in the TTCFG max occurences:{max_occ}"
+    assert res not in cfg, (
+        f"Occurences:{res.depth() - 1} should NOT be in the TTCFG max occurences:{max_occ}"
+    )
 
 
 @pytest.mark.parametrize("max_size", max_sizes)
@@ -98,10 +98,10 @@ def test_product() -> None:
     size1 = dsl.parse_program("(+ 1 var0)", FunctionType(INT, INT))
     res = size1
     while res.size() <= max_size:
-        assert (
-            res in cfg
-        ), f"Program size:{res.size()} should be in the TTCFG max_size:{max_size}"
+        assert res in cfg, (
+            f"Program size:{res.size()} should be in the TTCFG max_size:{max_size}"
+        )
         res = dsl.parse_program(f"(+ {res} var0)", FunctionType(INT, INT))
-    assert (
-        res not in cfg
-    ), f"Program size:{res.size()} should NOT be in the TTCFG max_size:{max_size}"
+    assert res not in cfg, (
+        f"Program size:{res.size()} should NOT be in the TTCFG max_size:{max_size}"
+    )

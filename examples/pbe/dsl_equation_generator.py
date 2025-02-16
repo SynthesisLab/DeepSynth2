@@ -218,7 +218,9 @@ def check_program(
     is_list_constant = True
     my_outputs = []
     candidates = set(all_sol.keys())
-    is_identity = [len(program.used_variables()) == 1 for _ in program.type.arguments()]
+    is_identity = [
+        set([i]) == arg.used_variables() for i, arg in enumerate(program.arguments)
+    ]
     for i, inp in enumerate(inputs):
         out = our_eval(program, inp)
         # Update candidates
@@ -280,6 +282,9 @@ def check_symmetries() -> None:
             if current_prog in programs_done:
                 continue
             programs_done.add(current_prog)
+            used = current_prog.used_variables()
+            if len(used) == 1 and 0 not in used:
+                continue
             is_constant, is_identity, candidates, my_outputs = check_program(
                 current_prog, inputs, all_sol
             )
@@ -312,6 +317,9 @@ def check_equivalent() -> None:
         # ========================
         for done, program in enumerate(get_enumerator(cfg)):
             if program in programs_done:
+                continue
+            used = program.used_variables()
+            if len(used) == 1 and 0 not in used:
                 continue
             is_constant, is_identity, candidates, my_outputs = check_program(
                 program, inputs, all_sol
@@ -349,7 +357,7 @@ def update_filter(
     builder = equivalence_classes_to_filters(commutatives, classes, dsl)
     if verbose:
         print(
-            f"\tfound {F.YELLOW}{builder.stats['constraints.successes']}{F.RESET} ({F.YELLOW}{builder.stats['constraints.successes']/builder.stats['constraints.total']:.1%}{F.RESET}) constraints"
+            f"\tfound {F.YELLOW}{builder.stats['constraints.successes']}{F.RESET} ({F.YELLOW}{builder.stats['constraints.successes'] / builder.stats['constraints.total']:.1%}{F.RESET}) constraints"
         )
     return (lambda t: builder.get_filter(t, set())), builder.stats
 

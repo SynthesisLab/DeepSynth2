@@ -366,9 +366,9 @@ class UHeapSearch(UHSEnumerator[U, V, W]):
             # We guarantee that F is a Primitive
             probability = self.G.probabilities[S][F][__wrap__(v)]  # type: ignore
             probability *= self.__prob__(new_program, S, Si, information, 0)
-            assert (
-                probability >= 0
-            ), f"Could not find {new_program} in {S} [{self.G.__contains_rec__(new_program, S, self.G.start_information())[0]}]"
+            assert probability >= 0, (
+                f"Could not find {new_program} in {S} [{self.G.__contains_rec__(new_program, S, self.G.start_information())[0]}]"
+            )
         else:
             possibles = self.G.derive_all(self.G.start_information(), S, new_program)
             assert len(possibles) == 1

@@ -68,9 +68,9 @@ def test_logpcfg2pcfg() -> None:
             for S in pcfg.rules:
                 for P in pcfg.rules[S]:
                     target = np.exp(log_pcfg.tags[S][P].item())
-                    assert np.isclose(
-                        pcfg.probabilities[S][P], target
-                    ), f"S:{S}, P:{P} pcfg_prob:{pcfg.probabilities[S][P]} log_pcfg_prob:{target}"
+                    assert np.isclose(pcfg.probabilities[S][P], target), (
+                        f"S:{S}, P:{P} pcfg_prob:{pcfg.probabilities[S][P]} log_pcfg_prob:{target}"
+                    )
 
 
 def test_var_as_function() -> None:
@@ -122,9 +122,9 @@ def test_varprob() -> None:
                 for P in pcfg.rules[S]:
                     if isinstance(P, Variable):
                         prob = np.exp(pcfg.tags[S][P].item())
-                        assert np.isclose(
-                            prob, layer.variable_probability
-                        ), f"S:{S}, P:{P} prob:{prob} target:{layer.variable_probability}"
+                        assert np.isclose(prob, layer.variable_probability), (
+                            f"S:{S}, P:{P} prob:{prob} target:{layer.variable_probability}"
+                        )
 
 
 def test_learning() -> None:

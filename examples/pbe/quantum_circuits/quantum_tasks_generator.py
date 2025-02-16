@@ -183,7 +183,7 @@ def circuit_to_program(circuit: qk.QuantumCircuit, dsl: DSL, tr: Type) -> Progra
         for qbit in inst.qubits:
             index, registers = circuit.find_bit(qbit)
             register, idx_in_reg = registers[0]
-            program += f" {register.size-index - 1}"
+            program += f" {register.size - index - 1}"
         program += ")"
     return dsl.parse_program(program.replace("Cx", "CNOT"), tr)
 

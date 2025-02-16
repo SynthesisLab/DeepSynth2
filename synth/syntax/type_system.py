@@ -561,12 +561,12 @@ class GenericFunctor(TypeFunctor):
         self.infix = infix
 
     def __call__(self, *types: Type) -> Type:
-        assert (
-            self.max_args <= 0 or len(types) <= self.max_args
-        ), f"Too many arguments:{len(types)}>{self.max_args} to build a {self.name}"
-        assert (
-            self.min_args <= 0 or len(types) >= self.min_args
-        ), f"Too few arguments:{len(types)}<{self.min_args} to build a {self.name}"
+        assert self.max_args <= 0 or len(types) <= self.max_args, (
+            f"Too many arguments:{len(types)}>{self.max_args} to build a {self.name}"
+        )
+        assert self.min_args <= 0 or len(types) >= self.min_args, (
+            f"Too few arguments:{len(types)}<{self.min_args} to build a {self.name}"
+        )
         return Generic(self.name, *types, infix=self.infix)
 
     def __is_arg_an_instance__(self, arg: Type) -> bool:

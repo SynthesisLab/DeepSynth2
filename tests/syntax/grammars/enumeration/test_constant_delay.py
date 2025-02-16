@@ -78,9 +78,9 @@ def test_infinite(k: int, precis: float) -> None:
     for program in enumerate_prob_grammar(pcfg, k, precis):
         count -= 1
         p = pcfg.probability(program)
-        assert (
-            -1e-12 <= last - p or abs(p / last) <= 1 + precis
-        ), f"failed at program n°{count}:{program}, p={p} last={last}, p={np.log(p)} last={np.log(last)}"
+        assert -1e-12 <= last - p or abs(p / last) <= 1 + precis, (
+            f"failed at program n°{count}:{program}, p={p} last={last}, p={np.log(p)} last={np.log(last)}"
+        )
         last = p
         if count < 0:
             break

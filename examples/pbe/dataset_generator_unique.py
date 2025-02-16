@@ -292,7 +292,7 @@ def generate_samples_for(
             pbar.n = nb_examples * abs(threshold)
             pbar.refresh()
         pbar.set_postfix_str(
-            f"{len(equiv_classes)}->{best_score} | {best_score/len(programs):.0%}"
+            f"{len(equiv_classes)}->{best_score} | {best_score / len(programs):.0%}"
         )
         pbar.update(1)
         nb_tested += 1

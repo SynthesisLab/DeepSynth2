@@ -253,9 +253,9 @@ class DSL:
                 for ori, (__, rep) in constants.items():
                     str_repr = str_repr.replace(f" {rep} ", f" {ori} ")
                     str_repr = str_repr.replace(f" {rep})", f" {ori})")
-                assert (
-                    str_repr == program
-                ), f"Failed parsing:\n{program}\n\tgot:\n{str_repr}\n\ttype request:{type_request} obtained:{sol.type}"
+                assert str_repr == program, (
+                    f"Failed parsing:\n{program}\n\tgot:\n{str_repr}\n\ttype request:{type_request} obtained:{sol.type}"
+                )
             return sol
         else:
             program = program.strip("()")

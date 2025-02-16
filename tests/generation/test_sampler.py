@@ -29,9 +29,9 @@ def test_list_sampling() -> None:
             l = a.sample(type=my_type)
             el = l
             for _ in range(max_depth - 1):
-                assert isinstance(
-                    el, list
-                ), f"Max depth:{max_depth} Type:{my_type} list:{l}"
+                assert isinstance(el, list), (
+                    f"Max depth:{max_depth} Type:{my_type} list:{l}"
+                )
                 assert len(el) <= 5 and len(el) > 0
                 el = l[0]
             b = a.sample(type=INT)

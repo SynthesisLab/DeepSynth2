@@ -96,9 +96,9 @@ class TTCFG(
         assert False, f"Cannot multiply TTCFG with {other}"
 
     def __mul_ttcfg__(self, other: "TTCFG[U, V]") -> "TTCFG[Tuple[S, U], Tuple[T, V]]":
-        assert (
-            self.type_request == other.type_request
-        ), "Both TTCFGs do not have the same type request!"
+        assert self.type_request == other.type_request, (
+            "Both TTCFGs do not have the same type request!"
+        )
         rules: Dict[
             Tuple[Type, Tuple[Tuple[S, U], Tuple[T, V]]],
             Dict[
@@ -344,9 +344,9 @@ class TTCFG(
             return out_plus
         new_info, new_S = self.derive(info, S, P)
         if new_S not in self.rules:
-            assert (
-                len(new_info) == 0
-            ), f"info:{new_info} from {S}->{P} ({info}) obtained: {new_S}"
+            assert len(new_info) == 0, (
+                f"info:{new_info} from {S}->{P} ({info}) obtained: {new_S}"
+            )
             return set([new_S[1][1]])
         # print(f"    ask {S} -> {P} ({info}->{new_info})")
         # Derive all possible children

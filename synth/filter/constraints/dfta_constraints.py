@@ -276,9 +276,9 @@ def __process__(
         if not local:
             out_grammar.finals = {q for q in out_grammar.finals if q[1][-1] == 1}
         else:
-            assert isinstance(
-                token, TokenFunction
-            ), f"Unsupported topmost token for local constraint"
+            assert isinstance(token, TokenFunction), (
+                f"Unsupported topmost token for local constraint"
+            )
             out_grammar = __filter__(
                 out_grammar,
                 lambda P, _, dst: P not in token.function.allowed or dst[1][-1] == 1,

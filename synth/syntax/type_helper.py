@@ -154,9 +154,9 @@ def auto_type(el: Union[Dict[str, str], str]) -> Union[Dict[str, Type], Type]:
         elif token == _TOK_BRACKETS:
             assert len(stack) > 0
             last = stack.pop()
-            assert isinstance(
-                last, PolymorphicType
-            ), f"Cannot restrain a non polymorphic type:{last}"
+            assert isinstance(last, PolymorphicType), (
+                f"Cannot restrain a non polymorphic type:{last}"
+            )
             r = auto_type(w)
             stack.append(FixedPolymorphicType(last.name, r))
         elif token == _TOK_POLYMORPHIC:

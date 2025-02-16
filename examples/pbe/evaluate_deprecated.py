@@ -147,9 +147,9 @@ supported_type_requests = Dataset.load(support).type_requests() if support else 
 # ================================
 
 
-def load_dsl_and_dataset() -> (
-    Tuple[Dataset[PBE], DSL, DSLEvaluatorWithConstant, List[int], str, List[str]]
-):
+def load_dsl_and_dataset() -> Tuple[
+    Dataset[PBE], DSL, DSLEvaluatorWithConstant, List[int], str, List[str]
+]:
     dsl_module = load_DSL(dsl_name)
     dsl, evaluator, lexicon = dsl_module.dsl, dsl_module.evaluator, dsl_module.lexicon
     constraints = []

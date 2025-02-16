@@ -72,9 +72,9 @@ def test_reduce(max_depth: int) -> None:
     dfta = cfg2dfta(cfg)
     dfta.reduce()
     for (P, args), dst in dfta.rules.items():
-        assert not (
-            all(x == 0 for x in args) and len(args) > 0
-        ), f"Unreachable rule: {P} {args}"
+        assert not (all(x == 0 for x in args) and len(args) > 0), (
+            f"Unreachable rule: {P} {args}"
+        )
         assert dst != max_depth, f"Unproductive rule: {P} {args} -> {dst}"
 
 

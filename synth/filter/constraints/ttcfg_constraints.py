@@ -337,9 +337,9 @@ def __process__(
     Dict[Path[U, V], TList[Set[V]]],
     TList[Tuple[Path, State, Info]],
 ]:
-    assert not isinstance(
-        token, (TokenAtLeast, TokenForceSubtree)
-    ), "Unsupported constraint for TTCFG(safe, det)"
+    assert not isinstance(token, (TokenAtLeast, TokenForceSubtree)), (
+        "Unsupported constraint for TTCFG(safe, det)"
+    )
     out_grammar: TTCFG[Tuple[U, int], Any] = grammar
     state = state or ProcessState()
     possible_new_states: Dict[Path[U, V], TList[Set[V]]] = defaultdict(list)
@@ -495,9 +495,9 @@ def __process__(
                             out_grammar,  # type: ignore
                             (SS, hist[:], info),
                         )
-                        assert len(path) == len(
-                            or_path
-                        ), f"or_path={or_path} path={path}"
+                        assert len(path) == len(or_path), (
+                            f"or_path={or_path} path={path}"
+                        )
                         new_relevant.append((path, SSS, Sinfo))
                         found += 1
                     except KeyError:

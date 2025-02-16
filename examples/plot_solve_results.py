@@ -130,7 +130,7 @@ def load_data(
             if len(to_replace) > 0:
                 name = name.replace(to_replace, "").strip()
             print(
-                f"\t{F.GREEN}{name}{F.RESET} solved {F.YELLOW}{solved}{F.RESET}/{total} ({F.YELLOW}{solved/total:.1%}{F.RESET}) tasks"
+                f"\t{F.GREEN}{name}{F.RESET} solved {F.YELLOW}{solved}{F.RESET}/{total} ({F.YELLOW}{solved / total:.1%}{F.RESET}) tasks"
             )
     return methods, timeout
 

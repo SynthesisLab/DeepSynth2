@@ -138,9 +138,9 @@ class UnionSampler(RequestSampler[Any]):
 
     def sample_for(self, type: Type, **kwargs: Any) -> Any:
         sampler = self.samplers.get(type, self.fallback)
-        assert (
-            sampler
-        ), f"UnionSampler: No sampler found for type {type}({hash(type)}) in {self}"
+        assert sampler, (
+            f"UnionSampler: No sampler found for type {type}({hash(type)}) in {self}"
+        )
         return sampler.sample(type=type, **kwargs)
 
     def __str__(self) -> str:
