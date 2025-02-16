@@ -179,16 +179,16 @@ def check_program(
     is_constant = True
     my_outputs = []
     candidates = set(all_sol.keys())
-    is_identity = isinstance(program, Function) and len(program.used_variables()) == 1
+    is_identity = [(i, True) for i in program.used_variables()]
     for i, inp in enumerate(inputs):
         out = our_eval(program, inp)
         # Update candidates
         candidates = {c for c in candidates if all_sol[c][i] == out}
-        is_identity = is_identity and out == inp[0]
+        is_identity = [(k, b and out == inp[k]) for k, b in is_identity]
         if is_constant and len(my_outputs) > 0 and my_outputs[-1] != out:
             is_constant = False
         my_outputs.append(out)
-    return is_constant, is_identity, candidates, my_outputs
+    return is_constant, any(b for _, b in is_identity), candidates, my_outputs
 
 
 def check_symmetries() -> None:
@@ -209,7 +209,6 @@ def check_symmetries() -> None:
         )
         inputs = sampled_inputs[primitive.type]
         all_sol = all_solutions[base_program.type.returns()]
-
         # ========================
         # Symmetry+Identity part
         # ========================
