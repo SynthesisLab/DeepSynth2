@@ -19,7 +19,7 @@ __RENAME = {
 
 __DATA__ = {
     "programs": (0, "Programs Enumerated"),
-    "skipped": (1, "Programs Skipped"),
+    "skipped": (1, "% of Programs Skipped"),
     "time": (2, "Time (in s)"),
     "reward": (3, "Mean Reward"),
     "min-rew": (4, "Min Reward"),
@@ -65,6 +65,41 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
                 methods[method][seed] = []
             for row in data:
                 methods[method][seed].append(row)
+    all_seeds = set(methods["basic"].keys()).union(set(methods["filter"].keys()))
+    for seed in all_seeds:
+        basic = methods["basic"][seed]
+        filter = methods["filter"][seed]
+        max_prog = max(max(x[0] for x in basic), max(x[0] for x in filter))
+        max_time = max(max(x[2] for x in basic), max(x[2] for x in filter))
+        methods["basic"][seed] = [
+            (x[0] / max_time, x[1] / max_prog, x[2] / max_prog, x[3], x[4], x[5])
+            for x in basic
+        ]
+        methods["filter"][seed] = [
+            (x[0] / max_time, x[1] / max_prog, x[2] / max_prog, x[3], x[4], x[5])
+            for x in filter
+        ]
+        filter_better = 0
+        equals = 0
+        index = 0
+        last_scores = [0, 0]
+        while index < max(len(basic), len(filter)):
+            pb = basic[index][3] if index < len(basic) else last_scores[0]
+            last_scores[0] = pb
+            pf = filter[index][3] if index < len(filter) else last_scores[1]
+            last_scores[1] = pf
+            filter_better += pf > pb
+            equals += pf == pb
+            index += 1
+        print("seed", seed)
+        ratios = [
+            max(x[0] for x in methods["filter"][seed]),
+            max(x[2] for x in methods["filter"][seed]),
+        ]
+        print(f"\tfound in {ratios[0]:.2%} of programs or {ratios[1]:.2%} of time")
+        print(
+            f"\tfitler superior in {filter_better / index:.2%} of frames and equal in { equals / index:.2%} of frames"
+        )
     return methods
 
 
