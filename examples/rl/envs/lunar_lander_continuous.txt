@@ -1,4 +1,0 @@
---env
-LunarLanderContinuous-v2
---goal
-200

@@ -1,4 +1,4 @@
 --env
-LunarLander-v2
+LunarLander-v3
 --goal
 200
