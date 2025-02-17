@@ -1,6 +1,6 @@
 from collections import defaultdict
 import json
-from typing import Any, Callable, Dict, Generator, List, Set, Tuple, TypeVar
+from typing import Any, Callable, Dict, Generator, List, Set, Tuple, TypeVar, Optional
 import argparse
 
 import tqdm
@@ -284,9 +284,40 @@ def check_equivalent() -> None:
     ftypes.close()
 
 
+def are_permutations_of_one_another(
+    p1: Program, p2: Program, dico: Optional[dict] = None
+) -> bool:
+    dic = dico or {}
+    if isinstance(p1, Function) and isinstance(p2, Function):
+        if not are_permutations_of_one_another(p1.function, p2.function, dico):
+            return False
+        for a1, a2 in zip(p1.arguments, p2.arguments):
+            if not are_permutations_of_one_another(a1, a2, dico):
+                return False
+        return True
+    elif isinstance(p1, Variable) and isinstance(p2, Variable):
+        if p1.variable in dic:
+            return dic[p1.variable] == p2.variable
+        dic[p1.variable] = p2.variable
+        return True
+    else:
+        return p1 == p2
+
+
+def filter_mappings(elements: list) -> list:
+    out = []
+    while elements:
+        x = elements.pop()
+        out.append(x)
+        elements = [y for y in elements if not are_permutations_of_one_another(x, y)]
+    return out
+
+
 def get_equivalence_classes() -> List[Set[Program]]:
     classes = [get_equivalence_class(i) for i in range(n_equiv_classes)]
     classes.append(identities + constants + [Variable(0)])
+    classes = [list(l) for l in classes if len(l) > 1]
+    classes = [filter_mappings(l) for l in classes]
     classes = [l for l in classes if len(l) > 1]
     return classes
 
