@@ -124,7 +124,7 @@ enumerator = enumerate_programs(pcfg)
 enumerator.filter = final_filter
 
 
-topk: TopkManager = TopkManager(evaluator, c=abs(TARGET_RETURN) / 2)
+topk: TopkManager = TopkManager(evaluator, c=abs(TARGET_RETURN) / 2, k=2)
 const_opti = ConstantOptimizer(SEED)
 
 
@@ -136,6 +136,8 @@ stats = [
         "score-best-mean",
         "score-best-min",
         "score-best-max",
+        "program",
+        "samples"
     )
 ]
 
@@ -151,6 +153,8 @@ def log_data():
             q_value,
             mini,
             maxi,
+            best_program,
+            incertitude,
         )
     )
     with open(output_file, "w") as fd:
@@ -165,7 +169,7 @@ def print_search_state():
         "programs:",
         ", ".join(
             [
-                f"{key}:{value.total} ({value.total *100 /total:.1f}%)"
+                f"{key}:{value.total} ({value.total * 100 / total:.1f}%)"
                 for key, value in counter.items("programs")
             ]
         ),
@@ -173,7 +177,7 @@ def print_search_state():
     print(
         "[SEARCH]",
         "skipped:",
-        f"{enumerator.filtered} ({enumerator.filtered *100 /total:.1f}%)",
+        f"{enumerator.filtered} ({enumerator.filtered * 100 / total:.1f}%)",
     )
     total = max(1, counter.total("episodes"))
     print(
@@ -181,7 +185,7 @@ def print_search_state():
         f"episodes (total:{total}):",
         ", ".join(
             [
-                f"{key}:{value.total} ({value.total *100 /total:.1f}%)"
+                f"{key}:{value.total} ({value.total * 100 / total:.1f}%)"
                 for key, value in counter.items("episodes")
             ]
         ),
@@ -192,7 +196,7 @@ def print_search_state():
         "total times:",
         ", ".join(
             [
-                f"{key}:{value.total:.2f}s ({value.total *100/total:.1f}%)"
+                f"{key}:{value.total:.2f}s ({value.total * 100 / total:.1f}%)"
                 for key, value in chronometer.items()
             ]
         ),
