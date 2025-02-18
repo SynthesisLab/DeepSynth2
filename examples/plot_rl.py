@@ -89,13 +89,15 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         min_reward = min(basic[-1][3], filter[-1][3])
         time_saved = 0
         filter_better = 0
+        basic_better = 0
         equals = 0
         reached = [False, False]
         reach_time = [1, 1]
         for a, b in zip(basic_data, filter_data):
             time_saved += 1
-            filter_better += b > a
-            equals += a == b
+            filter_better += (b / a) > 1.01
+            basic_better += (a / b) > 1.01
+            equals += abs(b - a) / abs(a) <= 0.01
             if not reached[0] and a >= min_reward:
                 reached[0] = True
                 reach_time[0] = time_saved / n_points
@@ -105,8 +107,8 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
 
         reach_time = np.array(reach_time) / max(reach_time)
 
-        filter_points[0].append(filter_better / n_points)
-        basic_points[0].append((n_points - filter_better - equals) / n_points)
+        filter_points[0].append(filter[-1][3])
+        basic_points[0].append(basic[-1][3])
         basic_points[1].append(reach_time[0])
         filter_points[1].append(reach_time[1])
 
@@ -133,9 +135,9 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         filter_points[0], filter_points[1], label=__RENAME.get("automatic"), alpha=0.7
     )
     plt.legend()
-    plt.xlabel("% Better Reward")
-    plt.ylabel("% of Time Used")
-    plt.xlim(left=max(plt.xlim()[0], 0), right=min(plt.xlim()[1], 1.025))
+    plt.xlabel("Average Reward")
+    plt.ylabel("% of Time Used to Reach Worst Method's Reward")
+    # plt.xlim(left=max(plt.xlim()[0], 0), right=min(plt.xlim()[1], 1.025))
     plt.ylim(bottom=max(plt.ylim()[0], 0), top=min(plt.ylim()[1], 1.025))
     plt.show()
     return methods
