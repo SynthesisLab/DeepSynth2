@@ -17,6 +17,8 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
     # Dict[name, data]
     methods = {}
 
+    rewards_per_seed = {}
+
     for file in glob(os.path.join(output_folder, "*.csv")):
         filename = os.path.relpath(file, output_folder)
         name = filename[:-4]
@@ -31,15 +33,27 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
             # Pop columns names
             columns = {name: ind for ind, name in enumerate(trace.pop(0))}
             indices = [
+                columns["program"],
                 columns["programs"],
                 columns["removed"],
                 columns["time"],
                 columns["score-best-mean"],
                 columns["score-best-min"],
                 columns["score-best-max"],
+                columns["samples"],
             ]
+            if seed not in rewards_per_seed:
+                rewards_per_seed[seed] = {}
+            for row in trace:
+                prog = row[indices[0]]
+                scores = list(map(float, [row[k] for k in indices[4:]]))
+                if prog not in rewards_per_seed[seed]:
+                    rewards_per_seed[seed][prog] = scores
+                n = rewards_per_seed[seed][prog][-1]
+                if n < scores[-1]:
+                    rewards_per_seed[seed][prog] = scores
             data = [
-                tuple(float(row[k]) if k >= 0 else 0 for k in indices) for row in trace
+                [row[0]] + list(float(row[k]) for k in indices[1:4]) for row in trace
             ]
             if len(data) == 0:
                 if verbose:
@@ -49,8 +63,10 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
                 methods[method] = {}
             if seed not in methods[method]:
                 methods[method][seed] = []
-            for row in data:
-                methods[method][seed].append(row)
+            methods[method][seed] = data
+    
+    
+    # POST PROCESSING NOW THAT ALL FILES ARE PROCESSED
     all_seeds = set(methods[__RENAME.get("")].keys()).union(
         set(methods[__RENAME.get("automatic")].keys())
     )
@@ -63,9 +79,9 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         filter = methods[__RENAME.get("automatic")][seed]
 
         # Rescale time in [0;1]
-        max_time = max(max(x[2] for x in basic), max(x[2] for x in filter))
-        basic = [(x[0], x[1], x[2] / max_time, x[3]) for x in basic]
-        filter = [(x[0], x[1], x[2] / max_time, x[3]) for x in filter]
+        max_time = max(max(x[3] for x in basic), max(x[3] for x in filter))
+        basic = [(x[0], x[1], x[2], x[3] / max_time, x[4]) for x in basic]
+        filter = [(x[0], x[1], x[2], x[3] / max_time, x[4]) for x in filter]
 
         # Interpolate Reward w.r.t. time
         # min_time = min(max(x[2] for x in basic), max(x[2] for x in filter))
@@ -74,14 +90,22 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         step = (min_time - 0) / n_points
         time_range = np.arange(0, min_time + step / 2, step=step) / min_time
 
-        basic_data = np.interp(time_range, [x[2] for x in basic], [x[3] for x in basic])
+        basic_data = np.interp(
+            time_range,
+            [x[2] for x in basic],
+            [rewards_per_seed[seed][x[0]][0] for x in basic],
+        )
         filter_data = np.interp(
-            time_range, [x[2] for x in filter], [x[3] for x in filter]
+            time_range,
+            [x[2] for x in filter],
+            [rewards_per_seed[seed][x[0]][0] for x in filter],
         )
 
         # Compare Reward at same time
         cmp_data = np.cumsum(filter_data >= basic_data) / (np.arange(n_points + 1) + 1)
-        new_method["cmp"][seed] = [(x, y) for x, y in zip(time_range, cmp_data)]
+        new_method["cmp"][seed] = [
+            (x * 100, y * 100) for x, y in zip(time_range, cmp_data)
+        ]
 
         # Produce scatter points
         # X = % better reward
@@ -105,26 +129,34 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
                 reached[1] = True
                 reach_time[1] = time_saved / n_points
 
-        reach_time = np.array(reach_time) / max(reach_time)
+        reach_time = (np.array(reach_time) / max(reach_time)) * 100
 
-        filter_points[0].append(filter[-1][3])
-        basic_points[0].append(basic[-1][3])
+        filter_points[0].append(rewards_per_seed[seed][filter[-1][0]])
+        basic_points[0].append(rewards_per_seed[seed][basic[-1][0]])
         basic_points[1].append(reach_time[0])
         filter_points[1].append(reach_time[1])
 
     plt.subplot(1, 2, 1)
     from plot_helper import plot_y_wrt_x
 
+    # width = 100
+    # n = 15
+    # unit = (width + 50) / n
+    # for i in range(n):
+    #     end_point = unit * (i + 1)
+    #     # y=-x
+    #     plt.plot([end_point - 50, end_point], [50, 0], c='red')
+    plt.fill_between([0, 100], 0, 50, alpha=0.5, color="red")
+    plt.hlines(50, 0, 100, linestyles="dashed", colors="red")
     plot_y_wrt_x(
         plt.gca(),
         new_method,
         (0, "% of Time"),
         (1, r"% Filter $\geq$ Basic"),
-        ylim=(0, 1.025),
-        xlim=(0, 1),
+        ylim=(0, 102.5),
+        xlim=(0, 100),
         cumulative=False,
     )
-    plt.hlines(0.5, 0, 1, linestyles="dashed", colors="red")
     plt.gca().get_legend().set_visible(False)
     plt.subplot(1, 2, 2)
     plt.grid()
@@ -138,7 +170,7 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
     plt.xlabel("Average Reward")
     plt.ylabel("% of Time Used to Reach Worst Method's Reward")
     # plt.xlim(left=max(plt.xlim()[0], 0), right=min(plt.xlim()[1], 1.025))
-    plt.ylim(bottom=max(plt.ylim()[0], 0), top=min(plt.ylim()[1], 1.025))
+    plt.ylim(bottom=max(plt.ylim()[0], 0), top=min(plt.ylim()[1], 102.5))
     plt.show()
     return methods
 
