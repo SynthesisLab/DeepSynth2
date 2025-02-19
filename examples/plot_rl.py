@@ -53,7 +53,8 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
                 if n < scores[-1]:
                     rewards_per_seed[seed][prog] = scores
             data = [
-                [row[0]] + list(float(row[k]) for k in indices[1:4]) for row in trace
+                [row[indices[0]]] + list(float(row[k]) for k in indices[1:4])
+                for row in trace
             ]
             if len(data) == 0:
                 if verbose:
@@ -64,8 +65,7 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
             if seed not in methods[method]:
                 methods[method][seed] = []
             methods[method][seed] = data
-    
-    
+
     # POST PROCESSING NOW THAT ALL FILES ARE PROCESSED
     all_seeds = set(methods[__RENAME.get("")].keys()).union(
         set(methods[__RENAME.get("automatic")].keys())
@@ -80,8 +80,8 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
 
         # Rescale time in [0;1]
         max_time = max(max(x[3] for x in basic), max(x[3] for x in filter))
-        basic = [(x[0], x[1], x[2], x[3] / max_time, x[4]) for x in basic]
-        filter = [(x[0], x[1], x[2], x[3] / max_time, x[4]) for x in filter]
+        basic = [(x[0], x[1], x[2], x[3] / max_time) for x in basic]
+        filter = [(x[0], x[1], x[2], x[3] / max_time) for x in filter]
 
         # Interpolate Reward w.r.t. time
         # min_time = min(max(x[2] for x in basic), max(x[2] for x in filter))
@@ -92,12 +92,12 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
 
         basic_data = np.interp(
             time_range,
-            [x[2] for x in basic],
+            [x[3] for x in basic],
             [rewards_per_seed[seed][x[0]][0] for x in basic],
         )
         filter_data = np.interp(
             time_range,
-            [x[2] for x in filter],
+            [x[3] for x in filter],
             [rewards_per_seed[seed][x[0]][0] for x in filter],
         )
 
@@ -110,7 +110,10 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
         # Produce scatter points
         # X = % better reward
         # Y = % time saved at max reward
-        min_reward = min(basic[-1][3], filter[-1][3])
+        min_reward = min(
+            rewards_per_seed[seed][basic[-1][0]][0],
+            rewards_per_seed[seed][filter[-1][0]][0],
+        )
         time_saved = 0
         filter_better = 0
         basic_better = 0
@@ -131,8 +134,8 @@ def load_data(output_folder: str, verbose: bool = False) -> Dict[str, Dict[int, 
 
         reach_time = (np.array(reach_time) / max(reach_time)) * 100
 
-        filter_points[0].append(rewards_per_seed[seed][filter[-1][0]])
-        basic_points[0].append(rewards_per_seed[seed][basic[-1][0]])
+        filter_points[0].append(rewards_per_seed[seed][filter[-1][0]][0])
+        basic_points[0].append(rewards_per_seed[seed][basic[-1][0]][0])
         basic_points[1].append(reach_time[0])
         filter_points[1].append(reach_time[1])
 
