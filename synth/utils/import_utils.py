@@ -1,4 +1,5 @@
 import importlib
+from importlib.util import find_spec
 from types import SimpleNamespace
 from typing import List, Tuple, TypeVar, Union, Iterable, Callable, Optional
 
@@ -28,7 +29,7 @@ def import_file_function(
 
     def loader(fully_load: bool = True) -> Optional[SimpleNamespace]:
         if not fully_load:
-            return __try_names__(import_name, importlib.util.find_spec, prefixes)  # type: ignore
+            return __try_names__(import_name, find_spec, prefixes)  # type: ignore
 
         module = __try_names__(import_name, importlib.import_module, prefixes)
         out = {}
