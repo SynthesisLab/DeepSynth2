@@ -81,12 +81,20 @@ filter_pot_funs = [
 MAX_BUDGET: int = 50
 MAX_TO_CHECK_SOLVED: int = 2 * MAX_BUDGET
 
+if "Pong" in env_name:
+    from pong_wrapper import make_pong
+
 
 def build_env():
-    env = gym.make(env_name, **env_args)
+    if "Pong" in env_name:
+        env = make_pong()
+    else:
+        env = gym.make(env_name, **env_args)
     env.reset(seed=SEED)
     return env
 
+
+env = build_env()
 
 # if DERIVATIVE_TIMESTEP > 0:
 #     env = DerivativeObsWrapper(env, DERIVATIVE_TIMESTEP)
@@ -103,7 +111,7 @@ evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 
 constant_types = set()
-if "float" in str(type_request):
+if "float" in str(type_request) and "Pong" not in env_name:
     constant_types.add(auto_type("float"))
 # Filter
 filters = [
@@ -137,7 +145,7 @@ stats = [
         "score-best-min",
         "score-best-max",
         "program",
-        "samples"
+        "samples",
     )
 ]
 
