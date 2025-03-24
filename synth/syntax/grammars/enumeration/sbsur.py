@@ -1,0 +1,151 @@
+from typing import (
+    Generator,
+    Generic,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
+import numpy as np
+
+
+from synth.filter.filter import Filter
+from synth.syntax.grammars.enumeration.program_enumerator import ProgramEnumerator
+from synth.syntax.grammars.tagged_u_grammar import ProbUGrammar
+from synth.syntax.program import Function, Program
+from synth.syntax.grammars.tagged_det_grammar import ProbDetGrammar
+
+from sbsur import SequenceGenerator, sample
+
+from synth.syntax.type_system import Type
+
+U = TypeVar("U")
+V = TypeVar("V")
+W = TypeVar("W")
+
+
+class SBSUR(
+    ProgramEnumerator[None],
+    Generic[U, V, W],
+):
+    def __init__(
+        self,
+        G: ProbDetGrammar[U, V, W],
+        filter: Optional[Filter[Program]] = None,
+    ) -> None:
+        # G must be in log prob
+        super().__init__(filter)
+        self.current: Optional[Program] = None
+
+        self.G = G
+        self.start = G.start
+        self.rules = G.rules
+
+        self.probs = {}
+        self.mapping = {}
+
+        for S, dico in G.rules.items():
+            if S not in self.probs:
+                self.probs[S] = []
+                self.mapping[S] = []
+            for P in dico:
+                self.probs[S].append(self.G.probabilities[S][P])
+                self.mapping[S].append(P)
+
+    def probability(self, program: Program) -> float:
+        return self.G.probability(program)
+
+    @classmethod
+    def name(cls) -> str:
+        return "sbsur"
+
+    def __seq_to_prob__(self, seq: List[int]) -> Optional[List[float]]:
+        current = self.G.start
+        info = self.G.start_information()
+        while seq:
+            selected_index = seq.pop(0)
+            P = self.mapping[current][selected_index]
+            info, current = self.G.derive(info, current, P)
+
+        out = self.probs.get(current, None)
+        return out
+
+    def __seq_to_prog__(self, seq: List[int]) -> Program:
+        current = self.G.start
+        info = self.G.start_information()
+        elements = []
+        while seq:
+            selected_index = seq.pop(0)
+            P = self.mapping[current][selected_index]
+            elements.append((P, current[0]))
+            info, current = self.G.derive(info, current, P)
+        return self.__build__(elements)
+
+    def __build__(self, elements: List[Tuple[Program, Type]]) -> Program:
+        stack = []
+        while elements:
+            P, t = elements.pop()
+            nargs = len(P.type.arguments())
+            if nargs == 0:
+                stack.append(P)
+            else:
+                args = stack[-nargs:]
+                stack = stack[:-nargs]
+                stack.append(Function(P, args))
+        assert len(stack) == 1
+        prog = stack.pop()
+        return prog
+
+    def generator(self) -> Generator[Program, None, None]:
+        """
+        A generator which outputs the next most probable program
+        """
+        max_categories: int = max(len(self.probs[S]) for S in self.probs)
+        # since at any decision there is at most 2 choices
+        seed: int = 0
+        # Create a sequence generator, it can be used until you exhaust it i.e. you sampled everything
+        gen: SequenceGenerator = SequenceGenerator(
+            lambda sequences: [self.__seq_to_prob__(seq) for seq in sequences],
+            max_categories,
+            seed,
+        )
+        while True:
+            batch = sample(gen, 1)
+            if len(batch) < 1:
+                break
+            for el in batch:
+                prog = self.__seq_to_prog__(el)
+                if self.filter is not None and self.filter(prog):
+                    continue
+
+                yield prog
+
+    def merge_program(self, representative: Program, other: Program) -> None:
+        """
+        Merge other into representative.
+        In other words, other will no longer be generated through heap search
+        """
+        pass
+
+    def programs_in_banks(self) -> int:
+        return 0
+
+    def programs_in_queues(self) -> int:
+        return 0
+
+    def clone(self, G: Union[ProbDetGrammar, ProbUGrammar]) -> "SBSUR[U, V, W]":
+        assert isinstance(G, ProbDetGrammar)
+        enum = self.__class__(G)
+        return enum
+
+
+def enumerate_prob_grammar(G: ProbDetGrammar[U, V, W]) -> SBSUR[U, V, W]:
+    Gp: ProbDetGrammar = ProbDetGrammar(
+        G.grammar,
+        {
+            S: {P: np.log(p) for P, p in val.items() if p > 0}
+            for S, val in G.probabilities.items()
+        },
+    )
+    return SBSUR(Gp)
