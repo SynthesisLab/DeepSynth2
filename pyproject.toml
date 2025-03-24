@@ -19,7 +19,8 @@ dependencies = [
     "tqdm>=4.63.0",
     "matplotlib>=3.5.1",
     "pltpublish>=0.1.0",
-    "gymnasium[mujoco, box2d]"
+    "gymnasium[mujoco, box2d]",
+    "ale-py>=0.10.2",
 ]
 
 [project.urls]
