@@ -48,11 +48,11 @@ class SBSUR(
         self.probs = {}
         self.mapping = {}
 
-        for S, dico in G.rules.items():
+        for S, dico in sorted(G.rules.items()):
             if S not in self.probs:
                 self.probs[S] = []
                 self.mapping[S] = []
-            for P in dico:
+            for P in sorted(dico):
                 self.probs[S].append(self.G.probabilities[S][P])
                 self.mapping[S].append(P)
 
@@ -168,7 +168,7 @@ class SBSURDFTA(
     ) -> None:
         super().__init__(filter)
         self.dfta = dfta
-        self.starts = list(dfta.finals)
+        self.starts = sorted(dfta.finals)
         self.batch_size = batch_size
 
         probs = {}
@@ -182,7 +182,7 @@ class SBSURDFTA(
             self.mapping[dst].append((P, args))
 
         self.probs = {}
-        for P, elems in probs.items():
+        for P, elems in sorted(probs.items()):
             self.probs[P] = len(elems) * [np.log(1 / len(elems))]
         # start
         self.probs[None] = len(self.starts) * [np.log(1 / len(self.starts))]
@@ -215,21 +215,23 @@ class SBSURDFTA(
         return out
 
     def __seq_to_elements__(self, seq: List[int]) -> List[Program]:
+        print("decoding:", seq)
         current = None
-        stack = []
+        stack = [None]
         elements = []
         selected_start = False
         while seq:
+            print("\tcurrent:", current, "elements:", elements, "stack:", stack)
+            current = stack.pop()
             selected_index = seq.pop(0)
             if selected_start:
                 P, args = self.mapping[current][selected_index]
                 stack += args
                 elements.append(P)
-                if len(stack) == 0:
-                    return elements
-                current = stack.pop()
+                # if len(stack) == 0:
+                # return elements
             else:
-                current = self.starts[selected_index]
+                stack.append(self.starts[selected_index])
                 selected_start = True
 
         return elements
@@ -238,6 +240,7 @@ class SBSURDFTA(
         return self.__build__(self.__seq_to_elements__(seq))
 
     def __build__(self, elements: List[Program]) -> Program:
+        print("building from:", elements)
         stack = []
         while elements:
             P = elements.pop()
