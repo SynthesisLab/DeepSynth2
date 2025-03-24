@@ -34,10 +34,12 @@ class SBSUR(
         self,
         G: ProbDetGrammar[U, V, W],
         filter: Optional[Filter[Program]] = None,
+        batch_size: int = 1,
     ) -> None:
         # G must be in log prob
         super().__init__(filter)
         self.current: Optional[Program] = None
+        self.batch_size = batch_size
 
         self.G = G
         self.start = G.start
@@ -112,8 +114,8 @@ class SBSUR(
             seed,
         )
         while True:
-            batch = sample(gen, 1)
-            if len(batch) < 1:
+            batch = sample(gen, self.batch_size)
+            if len(batch) < self.batch_size:
                 break
             for el in batch:
                 prog = self.__seq_to_prog__(el)
@@ -141,7 +143,9 @@ class SBSUR(
         return enum
 
 
-def enumerate_prob_grammar(G: ProbDetGrammar[U, V, W]) -> SBSUR[U, V, W]:
+def enumerate_prob_grammar(
+    G: ProbDetGrammar[U, V, W], batch_size: int = 1
+) -> SBSUR[U, V, W]:
     Gp: ProbDetGrammar = ProbDetGrammar(
         G.grammar,
         {
@@ -149,7 +153,7 @@ def enumerate_prob_grammar(G: ProbDetGrammar[U, V, W]) -> SBSUR[U, V, W]:
             for S, val in G.probabilities.items()
         },
     )
-    return SBSUR(Gp)
+    return SBSUR(Gp, batch_size=batch_size)
 
 
 class SBSURDFTA(
@@ -160,10 +164,12 @@ class SBSURDFTA(
         self,
         dfta: DFTA[U, V],
         filter: Optional[Filter[Program]] = None,
+        batch_size: int = 1,
     ) -> None:
         super().__init__(filter)
         self.dfta = dfta
         self.starts = list(dfta.finals)
+        self.batch_size = batch_size
 
         probs = {}
         self.mapping = {}
@@ -260,8 +266,8 @@ class SBSURDFTA(
             seed,
         )
         while True:
-            batch = sample(gen, 1)
-            if len(batch) < 1:
+            batch = sample(gen, self.batch_size)
+            if len(batch) < self.batch_size:
                 break
             for el in batch:
                 prog = self.__seq_to_prog__(el)
@@ -287,5 +293,5 @@ class SBSURDFTA(
         raise NotImplementedError
 
 
-def enumerate_uniform_dfta(G: DFTA[U, V]) -> SBSURDFTA[U, V]:
-    return SBSURDFTA(G)
+def enumerate_uniform_dfta(G: DFTA[U, V], batch_size: int = 1) -> SBSURDFTA[U, V]:
+    return SBSURDFTA(G, batch_size=batch_size)
