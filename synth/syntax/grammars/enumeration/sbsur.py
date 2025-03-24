@@ -11,6 +11,7 @@ import numpy as np
 
 
 from synth.filter.filter import Filter
+from synth.syntax.automata.tree_automaton import DFTA
 from synth.syntax.grammars.enumeration.program_enumerator import ProgramEnumerator
 from synth.syntax.grammars.tagged_u_grammar import ProbUGrammar
 from synth.syntax.program import Function, Program
@@ -149,3 +150,142 @@ def enumerate_prob_grammar(G: ProbDetGrammar[U, V, W]) -> SBSUR[U, V, W]:
         },
     )
     return SBSUR(Gp)
+
+
+class SBSURDFTA(
+    ProgramEnumerator[None],
+    Generic[U, V],
+):
+    def __init__(
+        self,
+        dfta: DFTA[U, V],
+        filter: Optional[Filter[Program]] = None,
+    ) -> None:
+        super().__init__(filter)
+        self.dfta = dfta
+        self.starts = list(dfta.finals)
+
+        probs = {}
+        self.mapping = {}
+
+        for (P, args), dst in dfta.rules.items():
+            if dst not in probs:
+                probs[dst] = []
+                self.mapping[dst] = []
+            probs[dst].append(1)
+            self.mapping[dst].append((P, args))
+
+        self.probs = {}
+        for P, elems in probs.items():
+            self.probs[P] = len(elems) * [np.log(1 / len(elems))]
+        # start
+        self.probs[None] = len(self.starts) * [np.log(1 / len(self.starts))]
+
+    def probability(self, program: Program) -> float:
+        return -1
+
+    @classmethod
+    def name(cls) -> str:
+        return "sbsur-dfta"
+
+    def __seq_to_prob__(self, seq: List[int]) -> Optional[List[float]]:
+        # print("\tdecisions:", len(seq), seq, "so far=", self.__seq_to_elements__(seq[:]))
+        current = None
+        stack = []
+        selected_start = False
+        while seq:
+            selected_index = seq.pop(0)
+            if selected_start:
+                P, args = self.mapping[current][selected_index]
+                stack += args
+                if len(stack) == 0:
+                    return None
+                current = stack.pop()
+            else:
+                current = self.starts[selected_index]
+                selected_start = True
+
+        out = self.probs.get(current, None)
+        return out
+
+    def __seq_to_elements__(self, seq: List[int]) -> List[Program]:
+        current = None
+        stack = []
+        elements = []
+        selected_start = False
+        while seq:
+            selected_index = seq.pop(0)
+            if selected_start:
+                P, args = self.mapping[current][selected_index]
+                stack += args
+                elements.append(P)
+                if len(stack) == 0:
+                    return elements
+                current = stack.pop()
+            else:
+                current = self.starts[selected_index]
+                selected_start = True
+
+        return elements
+
+    def __seq_to_prog__(self, seq: List[int]) -> Program:
+        return self.__build__(self.__seq_to_elements__(seq))
+
+    def __build__(self, elements: List[Program]) -> Program:
+        stack = []
+        while elements:
+            P = elements.pop()
+            nargs = len(P.type.arguments())
+            if nargs == 0:
+                stack.append(P)
+            else:
+                args = stack[-nargs:]
+                stack = stack[:-nargs]
+                stack.append(Function(P, args))
+        assert len(stack) == 1
+        prog = stack.pop()
+        return prog
+
+    def generator(self) -> Generator[Program, None, None]:
+        """
+        A generator which outputs the next most probable program
+        """
+        max_categories: int = max(len(self.probs[S]) for S in self.probs)
+        # since at any decision there is at most 2 choices
+        seed: int = 0
+        # Create a sequence generator, it can be used until you exhaust it i.e. you sampled everything
+        gen: SequenceGenerator = SequenceGenerator(
+            lambda sequences: [self.__seq_to_prob__(seq) for seq in sequences],
+            max_categories,
+            seed,
+        )
+        while True:
+            batch = sample(gen, 1)
+            if len(batch) < 1:
+                break
+            for el in batch:
+                prog = self.__seq_to_prog__(el)
+                if self.filter is not None and self.filter(prog):
+                    continue
+
+                yield prog
+
+    def merge_program(self, representative: Program, other: Program) -> None:
+        """
+        Merge other into representative.
+        In other words, other will no longer be generated through heap search
+        """
+        pass
+
+    def programs_in_banks(self) -> int:
+        return 0
+
+    def programs_in_queues(self) -> int:
+        return 0
+
+    def clone(self, G: Union[ProbDetGrammar, ProbUGrammar]) -> "SBSURDFTA[U, V]":
+        raise NotImplementedError
+
+
+def enumerate_uniform_dfta(G: DFTA[U, V]) -> SBSURDFTA[U, V]:
+    return SBSURDFTA(G)
