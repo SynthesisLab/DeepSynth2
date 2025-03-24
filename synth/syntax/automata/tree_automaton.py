@@ -110,14 +110,24 @@ class DFTA(Generic[U, V]):
         self.rules = new_rules
         self.finals = self.finals.intersection(new_states)
 
+    def __get_consumed__(self) -> Set[U]:
+        consumed: Set[U] = {q for q in self.finals}
+        new_elems = list(consumed)
+        while new_elems:
+            dst = new_elems.pop()
+            for (_, args), pot_dst in self.rules.items():
+                if dst == pot_dst:
+                    for arg in args:
+                        if arg not in consumed:
+                            new_elems.append(arg)
+                        consumed.add(arg)
+        return consumed
+
     def __remove_unproductive__(self) -> None:
         removed = True
         while removed:
             removed = False
-            consumed: Set[U] = {q for q in self.finals}
-            for _, args in self.rules:
-                for arg in args:
-                    consumed.add(arg)
+            consumed = self.__get_consumed__()
             for S, dst in list(self.rules.items()):
                 if dst not in consumed:
                     del self.rules[S]
