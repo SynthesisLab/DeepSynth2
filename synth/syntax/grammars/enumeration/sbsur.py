@@ -215,13 +215,13 @@ class SBSURDFTA(
         return out
 
     def __seq_to_elements__(self, seq: List[int]) -> List[Program]:
-        print("decoding:", seq)
+        # print("decoding:", seq)
         current = None
         stack = [None]
         elements = []
         selected_start = False
         while seq:
-            print("\tcurrent:", current, "elements:", elements, "stack:", stack)
+            # print("\tcurrent:", current, "elements:", elements, "stack:", stack)
             current = stack.pop()
             selected_index = seq.pop(0)
             if selected_start:
@@ -240,7 +240,7 @@ class SBSURDFTA(
         return self.__build__(self.__seq_to_elements__(seq))
 
     def __build__(self, elements: List[Program]) -> Program:
-        print("building from:", elements)
+        # print("building from:", elements)
         stack = []
         while elements:
             P = elements.pop()
