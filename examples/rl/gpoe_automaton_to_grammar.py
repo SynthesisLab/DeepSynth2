@@ -47,6 +47,7 @@ def parse(
                     rules[(Constant(var_type), tuple())] = dst
             else:
                 lines.insert(0, line)
+                continue
         else:
             if primitive_name[0] == "A":
                 primitive = Primitive(primitive_name, ACTION)
@@ -75,6 +76,7 @@ def parse(
                         primitive = possibles_primitives.pop()
                     else:
                         lines.insert(0, line)
+                        continue
             state2type[dst] = primitive.type.returns()
             args = elements
             for arg, arg_type in zip(args, primitive.type.arguments()):
