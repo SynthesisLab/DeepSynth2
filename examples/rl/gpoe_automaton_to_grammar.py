@@ -1,7 +1,6 @@
-from typing import Dict, Set, Tuple
+from typing import Dict, Generator, Set, Tuple
 from synth.syntax.automata.tree_automaton import DFTA
 from synth.syntax.dsl import DSL
-from synth.syntax.grammars.enumeration.sbsur import enumerate_uniform_dfta
 from synth.syntax.grammars.grammar import DerivableProgram
 from synth.syntax.program import Constant, Primitive, Variable
 from synth.syntax.type_helper import auto_type
@@ -22,6 +21,7 @@ def parse(
     rules: Dict[Tuple[DerivableProgram, Tuple[str, ...]], str] = {}
 
     action_states = set()
+    base_actions = set()
 
     state2type: dict[str, Type] = {}
 
@@ -51,6 +51,7 @@ def parse(
         else:
             if primitive_name[0] == "A":
                 primitive = Primitive(primitive_name, ACTION)
+                base_actions.add(dst)
             else:
                 possibles_primitives = [
                     p for p in dsl.list_primitives if p.primitive == primitive_name
@@ -100,9 +101,8 @@ def parse(
         for i in range(actions):
             dfta.rules[(Primitive(f"A{i}", ACTION), tuple())] = action_state
         # Action state must be final
-        dfta.finals = {action_state}
 
-        mapping = {k: action_state for k in action_states}
+        mapping = {k: action_state for k in base_actions}
 
         dfta = dfta.map_states(lambda k: mapping.get(k, k))
 
@@ -114,18 +114,54 @@ def parse(
     return dfta
 
 
-if __name__ == "__main__":
-    import sys
+def integer_partitions(k: int, n: int) -> Generator[Tuple[int, ...], None, None]:
+    if k > n:
+        return
+    tup = [n - k + 1] + [1] * (k - 1)
+    yield tuple(tup)
+    while True:
+        if tup[-1] == n - k + 1:
+            break
+        carry = tup[-1] - 1
+        tup[-1] = 1
+        for i in range(k - 2, -1, -1):
+            if tup[i] > 1:
+                break
+        tup[i] -= 1
+        tup[i + 1] += 1 + carry
+        yield tuple(tup)
 
-    with open(sys.argv[1]) as fd:
-        content = fd.read()
-    from control_dsl import get_dsl
 
-    type_req = auto_type("float -> float -> action")
-    dsl, eval = get_dsl(auto_type("float -> float -> float"), None)
-    aut = parse(dsl, content, type_req, {}, 10)
-    print(aut)
-    enumerator = enumerate_uniform_dfta(aut)
-    for program in enumerator.generator():
-        print(program)
-        eval.eval(program, [1, 2])
+def size_constraint(
+    dsl: DSL, type_request: Type, max_size: int
+) -> DFTA[Tuple[int, Type], DerivableProgram]:
+    rules = {}
+    rtype = type_request.returns()
+
+    finals = set()
+
+    for i, var_type in enumerate(type_request.arguments()):
+        is_final = var_type.is_instance(rtype)
+        dst = (1, var_type)
+        if is_final:
+            finals.add(dst)
+        rules[(Variable(i, var_type), tuple())] = dst
+
+    for size in range(1, max_size + 1):
+        for P in dsl.list_primitives:
+            P_rtype = P.type.returns()
+            args_types = P.type.arguments()
+            is_final = P_rtype.is_instance(rtype)
+            dst = (size, P_rtype)
+            if is_final:
+                finals.add(dst)
+            if len(args_types) == 0:
+                if size == 1:
+                    rules[(P, tuple())] = dst
+            else:
+                for size_req in integer_partitions(len(args_types), size - 1):
+                    args = tuple(zip(size_req, args_types))
+                    rules[(P, args)] = dst
+    dfta = DFTA(rules, finals)
+    dfta.reduce()
+    return dfta

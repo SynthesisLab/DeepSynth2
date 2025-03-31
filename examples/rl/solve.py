@@ -1,10 +1,9 @@
 import atexit
 import argparse
-import sys
 import json
 import csv
 
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 from synth.syntax.program import Program
@@ -19,12 +18,11 @@ from rl.rl_utils import type_for_env
 from program_evaluator import ProgramEvaluator
 
 from synth.syntax import (
-    CFG,
-    ProbDetGrammar,
-    bps_enumerate_prob_grammar as enumerate_programs,
     auto_type,
 )
-from synth.utils.import_utils import import_file_function
+from gpoe_automaton_to_grammar import parse, size_constraint
+
+from synth.syntax.grammars.enumeration.sbsur import enumerate_uniform_dfta
 
 import gymnasium as gym
 
@@ -54,32 +52,28 @@ parser.add_argument(
     "-o", "--output", type=str, default="./search_data.csv", help="CSV file name"
 )
 parser.add_argument(
-    "--filter",
-    nargs="*",
+    "--automaton",
     type=str,
-    help="load the given files and call their get_filter functions to get a Filter[Program]",
+    help="path to the automaton",
 )
 
-params = parser.parse_args(sys.argv[1:])
+params = parser.parse_args()
 SEED: int = params.seed
 # DERIVATIVE_TIMESTEP: int = params.derivative
 TARGET_RETURN: float = params.goal
-filter_files: List[str] = params.filter or []
+automaton: str = params.automaton
 output_file: str = params.output
 env_args: Dict = json.loads(params.env_arg)
 env_name: str = params.env
 env = gym.make(env_name, **env_args)
 
-
-filter_pot_funs = [
-    import_file_function(file[:-3].replace("/", "."), ["get_filter"])().get_filter
-    for file in filter_files
-]
 # =========================================================================
 # GLOBAL PARAMETERS
 # max number of episodes that should be done at most to compare two possiby equal (optimised) candidates
 MAX_BUDGET: int = 50
 MAX_TO_CHECK_SOLVED: int = 2 * MAX_BUDGET
+BATCH_SIZE: int = 1
+SIZE: int = 15
 
 if "Pong" in env_name:
     from pong_wrapper import make_pong
@@ -114,23 +108,22 @@ constant_types = set()
 if "float" in str(type_request) and "Pong" not in env_name:
     constant_types.add(auto_type("float"))
 # Filter
-filters = [
-    f(
+auto = size_constraint(dsl, type_request, SIZE)
+try:
+    with open(automaton) as fd:
+        content = fd.read()
+    G = parse(
+        dsl,
+        content,
         type_request,
         constant_types,
-        env.action_space.n if "action" in str(type_request) else 0,
+        env.action_space.n if type_request.ends_with(auto_type("action")) else 0,
     )
-    for f in filter_pot_funs
-]
-final_filter = None
-for filter in filters:
-    final_filter = filter if final_filter is None else final_filter.intersection(filter)
-cfg = CFG.infinite(dsl, type_request, n_gram=2, constant_types=constant_types)
-pcfg = ProbDetGrammar.uniform(cfg)
-# enumerator = enumerate_programs(pcfg, precision=1e-2)
-enumerator = enumerate_programs(pcfg)
-enumerator.filter = final_filter
-
+    dfta = auto.read_product(G)
+except FileNotFoundError:
+    print("No automaton found, using base")
+    dfta = auto
+enumerator = enumerate_uniform_dfta(dfta, BATCH_SIZE)
 
 topk: TopkManager = TopkManager(evaluator, c=abs(TARGET_RETURN) / 2, k=2)
 const_opti = ConstantOptimizer(SEED)
