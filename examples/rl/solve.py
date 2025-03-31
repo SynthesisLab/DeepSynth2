@@ -110,6 +110,8 @@ if "float" in str(type_request) and "Pong" not in env_name:
 # Filter
 auto = size_constraint(dsl, type_request, SIZE)
 try:
+    if automaton is None:
+        raise FileNotFoundError
     with open(automaton) as fd:
         content = fd.read()
     G = parse(
