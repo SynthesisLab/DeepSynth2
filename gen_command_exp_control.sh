@@ -23,7 +23,8 @@ function run_exp(){
     dfta=$2
     filename="$NAME/${dfta}_$seed.csv"
     if [ ! -f "$filename" ]; then
-        arg="--filter ${dfta}${DFTA_SUFFIX}_$seed.py"
+        arg="--automaton 'control.txt'"
+        # arg="--filter ${dfta}$DFTA_SUFFIX"
         if [[ -z "$dfta" ]]; then
             arg=""
         fi
@@ -37,7 +38,7 @@ fi
 
 for SEED in $SEEDS
 do
-    gen_dfta $SEED
+    # gen_dfta $SEED
     run_exp $SEED "automatic"
     run_exp $SEED
 done
