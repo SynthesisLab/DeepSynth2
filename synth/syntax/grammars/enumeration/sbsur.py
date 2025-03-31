@@ -48,11 +48,11 @@ class SBSUR(
         self.probs = {}
         self.mapping = {}
 
-        for S, dico in sorted(G.rules.items()):
+        for S, dico in sorted(G.rules.items(), key=str):
             if S not in self.probs:
                 self.probs[S] = []
                 self.mapping[S] = []
-            for P in sorted(dico):
+            for P in sorted(dico, key=str):
                 self.probs[S].append(self.G.probabilities[S][P])
                 self.mapping[S].append(P)
 
@@ -165,8 +165,10 @@ class SBSURDFTA(
         dfta: DFTA[U, V],
         filter: Optional[Filter[Program]] = None,
         batch_size: int = 1,
+        terminal_surprob: float = 10,
     ) -> None:
         super().__init__(filter)
+        dfta.reduce()
         self.dfta = dfta
         self.starts = sorted(dfta.finals)
         self.batch_size = batch_size
@@ -181,11 +183,22 @@ class SBSURDFTA(
             probs[dst].append(1)
             self.mapping[dst].append((P, args))
 
+        # Not really uniform
+        # Put higher probability on terminals
         self.probs = {}
-        for P, elems in sorted(probs.items()):
-            self.probs[P] = len(elems) * [np.log(1 / len(elems))]
+        for P, elems in sorted(probs.items(), key=str):
+            n_terminals = len([key not in self.mapping for key in elems])
+            total = len(elems)
+            total = (total - n_terminals) + n_terminals * terminal_surprob
+
+            self.probs[P] = np.array(
+                [
+                    np.log((terminal_surprob if key not in self.mapping else 1) / total)
+                    for key in elems
+                ]
+            )
         # start
-        self.probs[None] = len(self.starts) * [np.log(1 / len(self.starts))]
+        self.probs[None] = np.array(len(self.starts) * [np.log(1 / len(self.starts))])
 
     def probability(self, program: Program) -> float:
         return -1
