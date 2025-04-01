@@ -97,7 +97,7 @@ def parse(
     if actions > 0:
         assert len(action_states) >= 1, f"action states: {action_states}"
         # Any of these states should work
-        action_state = list(action_states).pop()
+        action_state = list(base_actions)[0]
         for i in range(actions):
             dfta.rules[(Primitive(f"A{i}", ACTION), tuple())] = action_state
         # Action state must be final
