@@ -51,7 +51,7 @@ class ProgramEvaluator:
             self.cache[program.hash] = (self.env_factory(), [])
             if not self.recording:
                 self.tmp_keys.append(program.hash)
-        li = self.returns(program)
+        _, li = self.cache[program.hash]
         for el in returns:
             li.append(el)
 

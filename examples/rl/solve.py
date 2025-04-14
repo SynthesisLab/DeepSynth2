@@ -136,6 +136,7 @@ try:
         env.action_space.n if type_request.ends_with(auto_type("action")) else 0,
     )
     dfta = auto.read_product(G)
+    dfta.reduce()
 except FileNotFoundError:
     print("No automaton found, using base")
     dfta = auto
@@ -230,6 +231,8 @@ def print_best_program():
         print("NO PROGRAM FOUND")
         return
     best_program, q_value, samples, mini, maxi = topk.get_best_stats()
+    if not use_precise and (samples <= 0 or q_value < TARGET_RETURN):
+        return
     print("[BEST PROGRAM]\t", best_program)
     # print("\tprobability=", toy_PCFG.probability_program(toy_PCFG.start, original_program))
     print(
@@ -318,7 +321,7 @@ while True:
         )
         const_opti.best_return = topk.get_best_stats()[1]
         counter.count("episodes.comparison", budget_used)
-        if ejected and ejected != copy:
+        if (ejected and ejected != copy) or not ejected:
             print_best_program()
             if is_solved():
                 log_data()

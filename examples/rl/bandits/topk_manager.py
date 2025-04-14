@@ -49,7 +49,7 @@ class TopkManager(Generic[T]):
         candidate = self.candidates[best_arm]
         n = self.evaluator.samples(candidate)
         if n == 0:
-            return candidate, float("nan"), float("inf"), -float("inf"), float("inf")
+            return candidate, float("nan"), 0, -float("inf"), float("inf")
         rew = self.evaluator.returns(candidate)
         mean_return = np.mean(rew)
         return (
@@ -65,9 +65,8 @@ class TopkManager(Generic[T]):
         candidate = self.candidates[best_arm]
         initial: int = self.evaluator.samples(candidate)
         budget_used: int = 0
-        while (
-            initial + budget_used < min_budget
-            and self.evaluator.mean_return(candidate) >= min_score
+        while initial + budget_used < min_budget and (
+            initial + budget_used == 0 or self.evaluator.returns(candidate)[-1] >= min_score
         ):
             budget_used += 1
             has_no_error = self.evaluator.eval(candidate)
@@ -96,9 +95,9 @@ class TopkManager(Generic[T]):
             index: int = np.argmin(self.__scores__())
             candidate: T = self.candidates[index]
             has_no_error = self.evaluator.eval(candidate)
+            budget_used += 1
             if not has_no_error:
                 return candidate, budget_used
-            budget_used += 1
         return self.__get_candidate_to_eject__(
             len(self.candidates) >= self.k
         ), budget_used
@@ -107,9 +106,12 @@ class TopkManager(Generic[T]):
         if len(self.candidates) == 1:
             return None
         if not self.use_precise:
-            for c in self.candidates:
-                if any(r < self.threshold for r in self.evaluator.returns(c)):
+            for c in reversed(self.candidates):
+                if self.evaluator.samples(c) > 0 and any(
+                    r < self.threshold for r in self.evaluator.returns(c)
+                ):
                     return c
+            return None
         mean_returns = [self.evaluator.mean_return(p) for p in self.candidates]
         worst_arm = np.argmin(mean_returns)
         worst = self.candidates[worst_arm]
