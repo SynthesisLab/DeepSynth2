@@ -14,11 +14,15 @@ class TopkManager(Generic[T]):
         evaluator: ProgramEvaluator,
         c: float = 0.7,
         k: int = 2,
+        use_precise: bool = False,
+        threshold: float = 0,
     ) -> None:
         self.evaluator = evaluator
         self.candidates: List[T] = []
         self.k = k
         self.c = c
+        self.use_precise = use_precise
+        self.threshold = threshold
 
     def num_candidates(self) -> int:
         return len(self.candidates)
@@ -71,13 +75,25 @@ class TopkManager(Generic[T]):
                 break
         return budget_used
 
+    def __scores__(self) -> np.ndarray:
+        if self.use_precise:
+            samples = np.asarray([self.evaluator.samples(p) for p in self.candidates])
+            returns = np.asarray(
+                [self.evaluator.mean_return(p) for p in self.candidates]
+            )
+            total = np.log(np.sum(samples))
+            return returns - self.c * np.sqrt(total / samples)
+        else:
+            return [self.evaluator.samples(p) for p in self.candidates]
+        # return [self.evaluator.samples(p) for p in self.candidates]
+
     def __run_until_ejection__(self, max_budget: int) -> Tuple[Optional[T], int]:
         """
         return: the T ejected and the cost
         """
         budget_used: int = 0
         while self.__get_candidate_to_eject__() is None and budget_used < max_budget:
-            index: int = np.argmin([self.evaluator.samples(p) for p in self.candidates])
+            index: int = np.argmin(self.__scores__())
             candidate: T = self.candidates[index]
             has_no_error = self.evaluator.eval(candidate)
             if not has_no_error:
@@ -90,6 +106,10 @@ class TopkManager(Generic[T]):
     def __get_candidate_to_eject__(self, force: bool = False) -> Optional[T]:
         if len(self.candidates) == 1:
             return None
+        if not self.use_precise:
+            for c in self.candidates:
+                if any(r < self.threshold for r in self.evaluator.returns(c)):
+                    return c
         mean_returns = [self.evaluator.mean_return(p) for p in self.candidates]
         worst_arm = np.argmin(mean_returns)
         worst = self.candidates[worst_arm]

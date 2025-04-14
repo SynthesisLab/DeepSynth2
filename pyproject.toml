@@ -21,6 +21,7 @@ dependencies = [
     "pltpublish>=0.1.0",
     "gymnasium[mujoco, box2d]",
     "ale-py>=0.10.2",
+    "grape",
 ]
 
 [project.urls]
@@ -35,6 +36,7 @@ dev = [
 
 [tool.uv.sources]
 vose = { git = "https://github.com/Theomat/vose.git" }
+grape = { git = "https://github.com/SynthesisLab/grape.git" }
 
 [build-system]
 requires = ["hatchling"]

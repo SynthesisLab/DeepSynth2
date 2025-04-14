@@ -6,6 +6,9 @@ import csv
 from typing import Dict
 
 import numpy as np
+from synth.filter.dfta_filter import DFTAFilter
+from synth.syntax.grammars.cfg import CFG
+from synth.syntax.grammars.tagged_det_grammar import ProbDetGrammar
 from synth.syntax.program import Program
 
 
@@ -23,6 +26,7 @@ from synth.syntax import (
 from gpoe_automaton_to_grammar import parse, size_constraint
 
 from synth.syntax.grammars.enumeration.sbsur import enumerate_uniform_dfta
+from synth.syntax.grammars.enumeration import bps_enumerate_prob_grammar
 
 import gymnasium as gym
 
@@ -30,16 +34,20 @@ import gymnasium as gym
 parser = argparse.ArgumentParser(fromfile_prefix_chars="@")
 
 parser.add_argument("--env", type=str, help="name of the environment")
+
 parser.add_argument(
-    "-g",
-    "--goal",
-    type=float,
-    default=500,
-    help="target score after which we automatically stop (default: 500)",
+    "--sampling", action="store_true", help="Use sampling instead of enumeration"
 )
-# parser.add_argument(
-#     "-d", "--derivative", type=int, default=-1, help="number of derivatives steps"
-# )
+parser.add_argument(
+    "--mab",
+    action="store_true",
+    help="Use MAB optimization for constants instead of grid search",
+)
+parser.add_argument(
+    "--with-target",
+    action="store_true",
+    help="COnsider only programs where all runs are above threshold",
+)
 parser.add_argument(
     "--env-build-arg",
     dest="env_arg",
@@ -52,6 +60,12 @@ parser.add_argument(
     "-o", "--output", type=str, default="./search_data.csv", help="CSV file name"
 )
 parser.add_argument(
+    "-g",
+    "--goal",
+    type=float,
+    help="target score after which we automatically stop",
+)
+parser.add_argument(
     "--automaton",
     type=str,
     help="path to the automaton",
@@ -59,20 +73,22 @@ parser.add_argument(
 
 params = parser.parse_args()
 SEED: int = params.seed
-# DERIVATIVE_TIMESTEP: int = params.derivative
+use_precise: bool = not params.with_target
 TARGET_RETURN: float = params.goal
 automaton: str = params.automaton
 output_file: str = params.output
 env_args: Dict = json.loads(params.env_arg)
 env_name: str = params.env
 env = gym.make(env_name, **env_args)
+use_sampling: bool = params.sampling
+use_mab: bool = params.mab
 
 # =========================================================================
 # GLOBAL PARAMETERS
-# max number of episodes that should be done at most to compare two possiby equal (optimised) candidates
-MAX_BUDGET: int = 50
-MAX_TO_CHECK_SOLVED: int = 2 * MAX_BUDGET
-BATCH_SIZE: int = 1
+# max number of episodes that should be done at most to compare two possibly equal (optimised) candidates
+MAX_BUDGET: int = 500
+MAX_TO_CHECK_SOLVED: int = 100
+BATCH_SIZE: int = 10
 SIZE: int = 15
 
 if "Pong" in env_name:
@@ -112,11 +128,9 @@ auto = size_constraint(dsl, type_request, SIZE)
 try:
     if automaton is None:
         raise FileNotFoundError
-    with open(automaton) as fd:
-        content = fd.read()
     G = parse(
         dsl,
-        content,
+        automaton,
         type_request,
         constant_types,
         env.action_space.n if type_request.ends_with(auto_type("action")) else 0,
@@ -125,41 +139,36 @@ try:
 except FileNotFoundError:
     print("No automaton found, using base")
     dfta = auto
-enumerator = enumerate_uniform_dfta(dfta, BATCH_SIZE)
 
-topk: TopkManager = TopkManager(evaluator, c=abs(TARGET_RETURN) / 2, k=2)
+
+if use_sampling:
+    enumerator = enumerate_uniform_dfta(dfta, BATCH_SIZE)
+else:
+    cfg = CFG.infinite(dsl, type_request, constant_types=constant_types)
+    probcfg = ProbDetGrammar.uniform(cfg)
+    enumerator = bps_enumerate_prob_grammar(probcfg)
+    filter = DFTAFilter(dfta)
+    enumerator.filter = filter
+
+topk: TopkManager = TopkManager(
+    evaluator,
+    c=abs(TARGET_RETURN) / 2,
+    k=2,
+    use_precise=use_precise,
+    threshold=TARGET_RETURN,
+)
 const_opti = ConstantOptimizer(SEED)
 
 
 stats = [
     (
-        "programs",
-        "removed",
         "time",
-        "score-best-mean",
-        "score-best-min",
-        "score-best-max",
         "program",
-        "samples",
     )
 ]
 
 
 def log_data():
-    best_program, q_value, incertitude, mini, maxi = topk.get_best_stats()
-
-    stats.append(
-        (
-            counter.get("programs.iterated").total,
-            enumerator.filtered,
-            chronometer.total_time(),
-            q_value,
-            mini,
-            maxi,
-            best_program,
-            incertitude,
-        )
-    )
     with open(output_file, "w") as fd:
         csv.writer(fd).writerows(stats)
 
@@ -231,6 +240,8 @@ def print_best_program():
 def is_solved() -> bool:
     if topk.num_candidates() < 1:
         return False
+    if use_precise:
+        return False
     current_best_return = topk.get_best_stats()[1]
     if current_best_return >= TARGET_RETURN:
         with chronometer.clock("evaluation.confirm"):
@@ -244,12 +255,10 @@ def is_solved() -> bool:
 
 
 def at_exit():
+    log_data()
     print_search_state()
     print("=" * 60)
     print_best_program()
-
-    with open(output_file, "w") as fd:
-        csv.writer(fd).writerows(stats)
 
 
 atexit.register(at_exit)
@@ -272,7 +281,7 @@ while True:
     # print("PROGRAM:", program)
     counter.count("programs.iterated", 1)
     iterated = counter.get("programs.iterated").total
-    if iterated % 20 == 0 and iterated > 0:
+    if iterated % 50 == 0 and iterated > 0:
         log_data()
         if iterated % 100 == 0 and iterated > 0:
             print_search_state()
@@ -297,6 +306,12 @@ while True:
         evaluator.record(True)
         copy.refresh_hash()
     counter.count("programs.evaluated", 1)
+    stats.append(
+        (
+            chronometer.total_time(),
+            copy,
+        )
+    )
     with chronometer.clock("evaluation.comparison"):
         ejected, budget_used = topk.challenge_with(
             copy, MAX_BUDGET, prior_experience=returns
@@ -309,3 +324,4 @@ while True:
                 log_data()
                 print("SOLVED" + "=" * 60)
                 break
+atexit.unregister(at_exit)
