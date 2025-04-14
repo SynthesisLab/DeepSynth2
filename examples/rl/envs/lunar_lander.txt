@@ -2,3 +2,4 @@
 LunarLander-v3
 --goal
 200
+--with-target

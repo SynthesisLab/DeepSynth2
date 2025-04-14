@@ -2,3 +2,4 @@
 CartPole-v1
 --goal
 500
+--with-target
