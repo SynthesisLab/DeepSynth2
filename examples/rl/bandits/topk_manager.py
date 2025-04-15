@@ -66,7 +66,8 @@ class TopkManager(Generic[T]):
         initial: int = self.evaluator.samples(candidate)
         budget_used: int = 0
         while initial + budget_used < min_budget and (
-            initial + budget_used == 0 or self.evaluator.returns(candidate)[-1] >= min_score
+            initial + budget_used == 0
+            or self.evaluator.returns(candidate)[-1] >= min_score
         ):
             budget_used += 1
             has_no_error = self.evaluator.eval(candidate)

@@ -14,7 +14,7 @@ function run_exp(){
     filename="$NAME/${dfta}_$seed_${solver}_${opti}.csv"
     # echo "file:$filename"
     if [ ! -f "$filename" ]; then
-        arg="--automaton 'control.txt'"
+        arg="--automaton 'control.grape'"
         if [[ -z $dfta ]]; then
             arg=""
         fi
