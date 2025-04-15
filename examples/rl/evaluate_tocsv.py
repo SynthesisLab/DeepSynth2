@@ -1,5 +1,6 @@
 from typing import Callable, List
 import gymnasium as gym
+import tqdm
 from examples.rl.program_evaluator import ProgramEvaluator
 from synth.semantic.evaluator import Evaluator
 from synth.syntax.program import Program
@@ -14,6 +15,7 @@ def evaluate_programs_to_csv(
     evaluator: Evaluator,
     num_seeds: int,
     csv_file: str = "program_evaluation.csv",
+    save_every: int = 10
 ):
     """
     Evaluates a list of programs on an environment for multiple seeds and saves the results to a CSV.
@@ -55,7 +57,8 @@ def evaluate_programs_to_csv(
             results[program] += [None] * (num_seeds - len(results[program]))
 
     atexit.register(save)
-    for program in programs:
+    i = 0
+    for program in tqdm.tqdm(programs):
         for seed in range(num_seeds):
             if results[program][seed] is None:
                 env = env_factory()
@@ -63,5 +66,9 @@ def evaluate_programs_to_csv(
                 program_evaluator.cache[program.hash] = (env, [])
                 program_evaluator.eval(program, 1)
                 results[program][seed] = program_evaluator.returns(program)[-1]
+        i += 1
+        if i >= save_every == 0:
+            save()
+            i = 0
 
     atexit.unregister(save)
