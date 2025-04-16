@@ -84,14 +84,16 @@ evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 def clever_parse(str_program: str) -> Program:
     constants = {}
-    start = str_program.find("<<", 0)
-    while start != -1:
-        end = str_program.find(">>", start)
-        str_cst = str_program[start + 2 : end]
-        constants[str_cst] = (auto_type("float"), float(str_cst))
-        start = end + 2
-    return dsl.parse_program(str_program, type_request, constants)
-
+    while True:
+        try:
+            prog = dsl.parse_program(str_program, type_request, constants)
+            return prog
+        except AssertionError as e:
+            msg: str = e.args[0]
+            end = msg.rfind("'")
+            start = msg.rfind("'", None, end - 1)
+            str_float = msg[start + 1: end]
+            constants[str_float] = (auto_type("float"), float(str_float))
 
 with open(params.file) as fd:
     str_programs = fd.readlines()
