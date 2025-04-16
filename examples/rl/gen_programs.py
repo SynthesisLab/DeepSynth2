@@ -122,11 +122,11 @@ progs = []
 
 if os.path.exists(params.output):
     with open(params.output) as fd:
-        already_loaded = [x.strip("\n") for x in fd.readlines()]
+        already_loaded = [x.strip("\n") for x in fd.readlines() if len(x.strip()) > 1]
 
 def save():
     with open(params.output, "w") as fd:
-        fd.writelines(already_loaded)
+        fd.writelines(list(map(lambda x: x + "\n", already_loaded)))
         for prog in progs:
             str_prog = str(prog)
             # Put all constants in << >>
@@ -134,9 +134,15 @@ def save():
 atexit.register(save)
 g = enumerator.generator()
 i = 0
+size = 0
 try:
-    while True:
+    while size <= params.size:
         program = next(g)
+        if program.size() > size:
+            size = program.size()
+            print("size:", size, "/", params.size)
+            if size > params.size:
+                continue
         if i < len(already_loaded):
             i += 1
             continue
