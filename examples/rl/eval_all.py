@@ -2,9 +2,10 @@ import argparse
 import json
 from typing import Dict
 
+import tqdm
+
 from control_dsl import get_dsl
 from rl.rl_utils import type_for_env
-from program_evaluator import ProgramEvaluator
 from evaluate_tocsv import evaluate_programs_to_csv
 
 
@@ -79,7 +80,6 @@ print("Requested type:", type_request)
     type_request,
     env.action_space,
 )
-evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 
 def clever_parse(str_program: str) -> Program:
@@ -97,5 +97,5 @@ def clever_parse(str_program: str) -> Program:
 
 with open(params.file) as fd:
     str_programs = fd.readlines()
-    programs = [clever_parse(str_prog.replace("\n", "")) for str_prog in str_programs]
-evaluate_programs_to_csv(programs, build_env, evaluator, MAX_BUDGET, output_file)
+    programs = [clever_parse(str_prog.replace("\n", "")) for str_prog in tqdm.tqdm(str_programs, desc="parsing")]
+evaluate_programs_to_csv(programs, build_env, prog_evaluator, MAX_BUDGET, output_file)

@@ -33,7 +33,9 @@ def evaluate_programs_to_csv(
     def save():
         data = []
         for program, rewards in results.items():
-            row = [str(program)] + rewards
+            if len(rewards) == 0:
+                continue
+            row = [str(program)] + [rewards[i] if i in rewards else None for i in range(num_seeds)]
             data.append(row)
         columns = ["Program"] + [f"reward{i + 1}" for i in range(num_seeds)]
         df = pd.DataFrame(data, columns=columns)
@@ -41,33 +43,33 @@ def evaluate_programs_to_csv(
 
     if os.path.exists(csv_file):
         df = pd.read_csv(csv_file)
-        for index, row in df.iterrows():
+        for index, row in tqdm.tqdm(df.iterrows(), desc="loading existing data"):
             program_str = row["Program"]
-            rewards = [el for el in row[1:].tolist() if str(el) != "None"]
+            rewards = [el for el in row[1:].tolist() if str(el) != "None" and len(str(el).strip()) > 0]
+            if len(rewards) <= 0:
+                continue
             program = next((p for p in programs if str(p) == program_str), None)
             if program:
-                results[program] = rewards
+                results[program] = {i: ri for i, ri in enumerate(rewards)}
             else:
                 print("failed parsing:", program)
 
     for program in programs:
         if program not in results:
-            results[program] = [None] * num_seeds
-        elif len(results[program]) < num_seeds:
-            results[program] += [None] * (num_seeds - len(results[program]))
+            results[program] = {}
 
     atexit.register(save)
     i = 0
     for program in tqdm.tqdm(programs):
         for seed in range(num_seeds):
-            if results[program][seed] is None:
+            if seed not in results[program]:
                 env = env_factory()
                 env.reset(seed=seed)
                 program_evaluator.cache[program.hash] = (env, [])
-                program_evaluator.eval(program, 1)
+                program_evaluator.eval(program)
                 results[program][seed] = program_evaluator.returns(program)[-1]
         i += 1
-        if i >= save_every == 0:
+        if i >= save_every:
             save()
             i = 0
 
