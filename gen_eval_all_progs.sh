@@ -13,10 +13,10 @@ fi
 
 for SEED in $SEEDS
 do
-    basic_progs="${NAME}_basic_seed$seed.txt"
-    filter_progs="${NAME}_filter_seed$seed.txt"
-    echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $BASIC --seed $seed -o $basic_progs"
-    echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $FILTER --seed $seed -o $filter_progs"
-    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs -o c${NAME}_seed${seed}_basic.csv"
-    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $filter_progs -o c${NAME}_seed${seed}_filter.csv"
+    basic_progs="${NAME}_basic_seed$SEED.txt"
+    filter_progs="${NAME}_filter_seed$SEED.txt"
+    echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $BASIC --seed $SEED -o $basic_progs"
+    echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $FILTER --seed $SEED -o $filter_progs"
+    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs -o c${NAME}_seed${SEED}_basic.csv"
+    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $filter_progs -o c${NAME}_seed${SEED}_filter.csv"
 done
