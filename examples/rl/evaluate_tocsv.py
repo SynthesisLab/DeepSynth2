@@ -72,5 +72,6 @@ def evaluate_programs_to_csv(
         if i >= save_every:
             save()
             i = 0
-
+    if i != 0:
+        save()
     atexit.unregister(save)
