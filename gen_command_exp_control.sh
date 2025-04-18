@@ -11,7 +11,7 @@ function run_exp(){
     dfta=$2
     solver=$3
     opti=$4
-    filename="$NAME/${dfta}_$seed_${solver}_${opti}.csv"
+    filename="$NAME/${dfta}_${seed}_${solver}_${opti}.csv"
     # echo "file:$filename"
     if [ ! -f "$filename" ]; then
         arg="--automaton 'control.grape'"
