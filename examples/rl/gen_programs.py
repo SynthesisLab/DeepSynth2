@@ -2,6 +2,7 @@ import os
 import atexit
 import argparse
 import json
+import time
 from typing import Dict
 
 import numpy as np
@@ -109,6 +110,7 @@ filter = DFTAFilter(dfta)
 enumerator.filter = filter
 const_opti = ConstantOptimizer(SEED)
 
+
 def make_eval(program: Program) -> float:
     def f():
         program.refresh_hash()
@@ -117,12 +119,14 @@ def make_eval(program: Program) -> float:
 
     return f
 
+
 already_loaded = []
 progs = []
 
 if os.path.exists(params.output):
     with open(params.output) as fd:
         already_loaded = [x.strip("\n") for x in fd.readlines() if len(x.strip()) > 1]
+
 
 def save():
     with open(params.output, "w") as fd:
@@ -131,10 +135,13 @@ def save():
             str_prog = str(prog)
             # Put all constants in << >>
             fd.write(f"{str_prog}\n")
+
+
 atexit.register(save)
 g = enumerator.generator()
 i = 0
 size = 0
+last_save = time.time()
 try:
     while size <= params.size:
         program = next(g)
@@ -146,6 +153,9 @@ try:
         if i < len(already_loaded):
             i += 1
             continue
+        if time.time() - last_save >= 300:
+            save()
+            last_save = time.time()
         copy = program.clone()
         tiles = None
         returns = []
@@ -153,7 +163,9 @@ try:
             np.random.seed(SEED)
             evaluator.record(False)
             tiles, returns = const_opti.optimize(
-                make_eval(copy), list(copy.constants()), max_total_budget=10*MAX_BUDGET
+                make_eval(copy),
+                list(copy.constants()),
+                max_total_budget=10 * MAX_BUDGET,
             )
             for constant, tile in zip(copy.constants(), tiles):
                 constant.assign(tile.map(np.random.uniform(0, 1)))
