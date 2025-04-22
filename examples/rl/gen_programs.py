@@ -126,9 +126,11 @@ progs = []
 if os.path.exists(params.output):
     with open(params.output) as fd:
         already_loaded = [x.strip("\n") for x in fd.readlines() if len(x.strip()) > 1]
+    print("loaded", len(already_loaded), "programs")
 
 
 def save():
+    print("saved", len(progs), "new programs")
     with open(params.output, "w") as fd:
         fd.writelines(list(map(lambda x: x + "\n", already_loaded)))
         for prog in progs:
