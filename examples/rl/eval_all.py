@@ -31,6 +31,7 @@ parser.add_argument("-s", "--seed", type=int, default=1, help="seed")
 parser.add_argument(
     "-o", "--output", type=str, default="./search_data.csv", help="CSV file name"
 )
+parser.add_argument("--warm", type=str, default="")
 parser.add_argument(
     "-g",
     "--goal",
@@ -49,6 +50,7 @@ output_file: str = params.output
 env_args: Dict = json.loads(params.env_arg)
 env_name: str = params.env
 env = gym.make(env_name, **env_args)
+
 
 # =========================================================================
 # GLOBAL PARAMETERS
@@ -92,10 +94,16 @@ def clever_parse(str_program: str) -> Program:
             msg: str = e.args[0]
             end = msg.rfind("'")
             start = msg.rfind("'", None, end - 1)
-            str_float = msg[start + 1: end]
+            str_float = msg[start + 1 : end]
             constants[str_float] = (auto_type("float"), float(str_float))
+
 
 with open(params.file) as fd:
     str_programs = fd.readlines()
-    programs = [clever_parse(str_prog.replace("\n", "")) for str_prog in tqdm.tqdm(str_programs, desc="parsing")]
-evaluate_programs_to_csv(programs, build_env, prog_evaluator, MAX_BUDGET, output_file)
+    programs = [
+        clever_parse(str_prog.replace("\n", ""))
+        for str_prog in tqdm.tqdm(str_programs, desc="parsing")
+    ]
+evaluate_programs_to_csv(
+    programs, build_env, prog_evaluator, MAX_BUDGET, output_file, bootstrap=params.warm
+)

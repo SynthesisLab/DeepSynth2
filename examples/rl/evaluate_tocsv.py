@@ -16,6 +16,7 @@ def evaluate_programs_to_csv(
     num_seeds: int,
     csv_file: str = "program_evaluation.csv",
     save_every: int = 10,
+    bootstrap: str = "",
 ):
     """
     Evaluates a list of programs on an environment for multiple seeds and saves the results to a CSV.
@@ -38,6 +39,28 @@ def evaluate_programs_to_csv(
             return None
         else:
             return programs[key]
+
+    try:
+        with open(bootstrap) as fd:
+            lines = fd.readlines()
+            lines.pop(0)
+            for line in tqdm.tqdm(lines, desc="loading bootstrap"):
+                row = line.split(",")
+                program_str = row[0]
+                program = parse_prog(program_str)
+                if program is None:
+                    continue
+                rewards = []
+                for el in row[1:]:
+                    if str(el) != "None" and len(str(el).strip()) > 0:
+                        rewards.append(float(el))
+                    else:
+                        break
+                if len(rewards) <= 0:
+                    continue
+                results[program] = {i: ri for i, ri in enumerate(rewards)}
+    except FileNotFoundError:
+        pass
 
     def save():
         data = []
