@@ -6,7 +6,7 @@ NAME="${filename%.*}"
 BASIC="./control_basic15.grape"
 FILTER="./inf_control9.grape"
 SIZE=10
-if [[ $NAME == "lunar_lander" || $NAME == "acrobot" ]];
+if [[ $NAME == "lunar_lander" || $NAME == "acrobot" ]]; then
     SIZE=9
 fi
 
