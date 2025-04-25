@@ -18,8 +18,7 @@ def __tuple_semantic(current: np.ndarray, value, remaining: int):
 
 
 def get_dsl(
-    type_request: Type,
-    output_space: gym.spaces.Space,
+    type_request: Type, output_space: gym.spaces.Space, basic_constants: bool = False
 ) -> Tuple[DSL, Evaluator]:
     primitive_types = auto_type(
         {
@@ -66,6 +65,10 @@ def get_dsl(
     if type_request.ends_with(ACTION):
         add_actions(output_space.n)
 
+    if basic_constants:
+        for i in range(-5, 5 + 1):
+            primitive_types[str(i)] = "float"
+            semantics[str(i)] = i
     # Smart Filte
 
     is_useless = {

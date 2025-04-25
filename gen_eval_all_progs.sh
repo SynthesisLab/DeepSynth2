@@ -3,8 +3,8 @@ ENV="$1"
 SEEDS="1"
 filename=$(basename -- "$ENV")
 NAME="${filename%.*}"
-BASIC="./control_basic15.grape"
-FILTER="./inf_control9.grape"
+BASIC="./grammars/basic.grape"
+FILTER="./grammars/filter.grape"
 SIZE=10
 if [[ $NAME == "lunar_lander" || $NAME == "acrobot" ]]; then
     SIZE=9

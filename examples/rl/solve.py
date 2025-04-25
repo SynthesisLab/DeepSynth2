@@ -113,21 +113,20 @@ print("Requested type:", type_request)
 (
     dsl,
     prog_evaluator,
-) = get_dsl(
-    type_request,
-    env.action_space,
-)
+) = get_dsl(type_request, env.action_space, use_mab)
 evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 
 constant_types = set()
-if "float" in str(type_request) and "Pong" not in env_name:
+if "float" in str(type_request) and "Pong" not in env_name and use_mab:
     constant_types.add(auto_type("float"))
 # Filter
 auto = size_constraint(dsl, type_request, SIZE)
 try:
     if automaton is None:
         raise FileNotFoundError
+    if not use_mab:
+        automaton = automaton.replace(".grape", "_with_csts.grape")
     G = parse(
         dsl,
         automaton,

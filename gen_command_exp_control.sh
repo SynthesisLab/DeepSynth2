@@ -14,7 +14,7 @@ function run_exp(){
     filename="$NAME/${dfta}_${seed}_${solver}_${opti}.csv"
     # echo "file:$filename"
     if [ ! -f "$filename" ]; then
-        arg="--automaton 'control.grape'"
+        arg="--automaton './grammars/filter.grape'"
         if [[ -z $dfta ]]; then
             arg=""
         fi
