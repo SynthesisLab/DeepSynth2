@@ -67,7 +67,7 @@ def get_dsl(
 
     if basic_constants:
         for i in range(-5, 5 + 1):
-            primitive_types[str(i)] = "float"
+            primitive_types[str(i)] = auto_type("float")
             semantics[str(i)] = i
     # Smart Filte
 
