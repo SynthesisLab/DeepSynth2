@@ -113,7 +113,7 @@ print("Requested type:", type_request)
 (
     dsl,
     prog_evaluator,
-) = get_dsl(type_request, env.action_space, use_mab)
+) = get_dsl(type_request, env.action_space, not use_mab)
 evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 
