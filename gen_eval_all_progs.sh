@@ -25,6 +25,6 @@ do
     echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $BASIC_CST --seed $SEED -o $basic_progs_cst"
     echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $FILTER --seed $SEED -o $filter_progs"
     echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs -o ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
-    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs_cst -o ./$NAME/progs_eval_${NAME}_seed${SEED}_basic_with_csts.csv"
+    echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs_cst -o ./$NAME/progs_eval_${NAME}_seed${SEED}_basic_with_csts.csv --warm ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
     echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $filter_progs -o ./$NAME/progs_eval_${NAME}_seed${SEED}_filter.csv --warm ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
 done
