@@ -90,6 +90,7 @@ print("Requested type:", type_request)
 ) = get_dsl(
     type_request,
     env.action_space,
+    basic_constants="cst" in params.automaton
 )
 evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
