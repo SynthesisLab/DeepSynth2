@@ -13,7 +13,7 @@ from rl.rl_utils import type_for_env
 from program_evaluator import ProgramEvaluator
 
 
-from gpoe_automaton_to_grammar import parse
+from gpoe_automaton_to_grammar import parse, size_constraint
 import gymnasium as gym
 
 from synth.filter.dfta_filter import DFTAFilter
@@ -65,6 +65,7 @@ env = gym.make(env_name, **env_args)
 # GLOBAL PARAMETERS
 # max number of episodes that should be done at most to compare two possibly equal (optimised) candidates
 MAX_BUDGET: int = 500
+SIZE: int = 15
 if "Pong" in env_name:
     from pong_wrapper import make_pong
 
@@ -94,6 +95,7 @@ evaluator = ProgramEvaluator(build_env, prog_evaluator)
 constant_types = set()
 if "float" in str(type_request) and "Pong" not in env_name and use_mab:
     constant_types.add(auto_type("float"))
+auto = size_constraint(dsl, type_request, SIZE)
 dfta = parse(
     dsl,
     params.automaton,
@@ -101,6 +103,8 @@ dfta = parse(
     constant_types,
     env.action_space.n if type_request.ends_with(auto_type("action")) else 0,
 )
+dfta = auto.read_product(dfta)
+dfta.reduce()
 cfg = CFG.infinite(dsl, type_request, constant_types=constant_types)
 probcfg = ProbDetGrammar.uniform(cfg)
 enumerator = enumerate_prob_grammar(probcfg)
