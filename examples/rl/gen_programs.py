@@ -82,20 +82,17 @@ env = build_env()
 
 # if DERIVATIVE_TIMESTEP > 0:
 #     env = DerivativeObsWrapper(env, DERIVATIVE_TIMESTEP)
+use_mab = "cst" not in params.automaton
 type_request = type_for_env(build_env())
 print("Requested type:", type_request)
 (
     dsl,
     prog_evaluator,
-) = get_dsl(
-    type_request,
-    env.action_space,
-    basic_constants="cst" in params.automaton
-)
+) = get_dsl(type_request, env.action_space, basic_constants=not use_mab)
 evaluator = ProgramEvaluator(build_env, prog_evaluator)
 
 constant_types = set()
-if "float" in str(type_request) and "Pong" not in env_name:
+if "float" in str(type_request) and "Pong" not in env_name and use_mab:
     constant_types.add(auto_type("float"))
 dfta = parse(
     dsl,
