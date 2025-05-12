@@ -1,23 +1,58 @@
 from typing import Callable, List
 import gymnasium as gym
 import tqdm
+from examples.rl.control_dsl import get_dsl
 from examples.rl.program_evaluator import ProgramEvaluator
-from synth.semantic.evaluator import Evaluator
 from synth.syntax.program import Program
 import pandas as pd
 import os
-import atexit
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+
+def batch(iterable, n=1):
+    l = len(iterable)
+    for ndx in range(0, l, n):
+        yield iterable[ndx : min(ndx + n, l)]
+
+
+def eval_prog(
+    programs: list[Program],
+    env_factory,
+    type_request,
+    action_space,
+    num_seeds: int,
+    rews: list[dict],
+):
+    (
+        dsl,
+        prog_evaluator,
+    ) = get_dsl(
+        type_request,
+        action_space,
+    )
+    program_evaluator = ProgramEvaluator(env_factory, prog_evaluator)
+    results = []
+    for program, rew in zip(programs, rews):
+        for seed in range(num_seeds):
+            if seed not in rew:
+                env = env_factory()
+                env.reset(seed=seed)
+                program_evaluator.cache[program.hash] = (env, [])
+                program_evaluator.eval(program)
+                rew[seed] = program_evaluator.returns(program)[-1]
+        results.append((str(program), rew))
+    return results
 
 
 def evaluate_programs_to_csv(
     programs: List[Program],
     env_factory: Callable[[], gym.Env],
-    evaluator: Evaluator,
+    type_request,
+    action_space,
     num_seeds: int,
     csv_file: str = "program_evaluation.csv",
-    save_every: int = 10,
+    save_every: int = 50,
     bootstrap: str = "",
     procs: int = 1,
 ):
@@ -109,39 +144,34 @@ def evaluate_programs_to_csv(
         if program not in results:
             results[program] = {}
 
-    def eval_prog(program: Program, rew: dict):
-        program_evaluator = ProgramEvaluator(env_factory, evaluator)
-        if len(rew) == num_seeds:
-            return program, rew
-        for seed in range(num_seeds):
-            if seed not in rew:
-                env = env_factory()
-                env.reset(seed=seed)
-                program_evaluator.cache[program.hash] = (env, [])
-                program_evaluator.eval(program)
-                rew[seed] = program_evaluator.returns(program)[-1]
-        return program, rew
-
-    atexit.register(save)
+    relevant = [prog for prog in programs if len(results[prog]) < num_seeds]
     to_apply = [
-        (prog, results[prog].copy())
-        for prog in programs
-        if len(results[prog]) < num_seeds
+        (
+            progs,
+            env_factory,
+            type_request,
+            action_space,
+            num_seeds,
+            [results[prog].copy() for prog in progs],
+        )
+        for progs in batch(relevant, save_every // 2)
     ]
 
     with ProcessPoolExecutor(procs) as p:
-        futures = [p.submit(eval_prog, el) for el in to_apply]
+        futures = [p.submit(eval_prog, *el) for el in to_apply]
         remaining = len(futures)
-        pbar = tqdm.tqdm(remaining)
+        pbar = tqdm.tqdm(total=remaining)
+        last_saved = False
         for f in as_completed(futures):
             if f.done():
-                prog, rew = f.result()
-                results[prog] = rew
-                remaining -= 1
-            if remaining % save_every == 0:
-                save()
-            pbar.update(1)
+                for prog_as_str, rew in f.result():
+                    results[parse_prog(prog_as_str)] = rew
+                    pbar.update(1)
+                if last_saved:
+                    last_saved = False
+                else:
+                    save()
+                    last_saved = True
         pbar.close()
 
     save()
-    atexit.unregister(save)

@@ -114,7 +114,8 @@ with open(params.file) as fd:
 evaluate_programs_to_csv(
     programs,
     build_env,
-    prog_evaluator,
+    type_request,
+    env.action_space,
     MAX_BUDGET,
     output_file,
     bootstrap=params.warm,
