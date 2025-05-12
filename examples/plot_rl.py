@@ -1,59 +1,16 @@
 from glob import glob
 import os
-from typing import Dict, List
 import matplotlib.pyplot as plt
 import pltpublish as pub
-import csv
 import tqdm
-
-
-from multiprocessing import Pool
-
 
 import numpy as np
 
+from examples.plot_helper import plot_y_wrt_x
 
-def preprocess(file: str):
-    basename = os.path.basename(file)
-    preprocessed_file = file.replace(basename, f"preprocessed_{basename}")
-    if not os.path.exists(preprocessed_file):
-        values = []
-        last_program = None
-        last_time = -1
-        count = 0
-        with open(file) as fd:
-            lines = fd.readlines()
-            lines.pop(0)
-            for line in lines:
-                elems = line.split(",")
-                time = float(elems.pop(0))
-                program = elems.pop().strip(" \n")
-                if program != last_program:
-                    if count > 1:
-                        values.append((last_time, last_program))
-                    values.append((time, program))
-                    last_program = program
-                    last_time = time
-                count += 1
-        with open(preprocessed_file, "w") as fd:
-            fd.writelines([f"{time},{program}\n" for time, program in values])
-        print("done preprocessing")
 
-def load_evals(folder: str, env: str):
-    eval_file = f"progs_eval_{env}_seed1_basic.csv"
-    rewards = {}
-    with open(os.path.join(folder, eval_file)) as fd:
-        line = fd.readline()
-        line = fd.readline()
-        while line:
-            elems = line.split(",")
-            prog = elems.pop(0)
-            mean_reward = sum(map(float, elems)) / len(elems)
-            rewards[prog] = mean_reward
-            line = fd.readline()
-
-    eval_file = f"progs_eval_{env}_seed1_filter.csv"
-    with open(os.path.join(folder, eval_file)) as fd:
+def load_eval_file(file: str, rewards: dict):
+    with open(file) as fd:
         line = fd.readline()
         line = fd.readline()
         while line:
@@ -63,51 +20,75 @@ def load_evals(folder: str, env: str):
             if prog in rewards:
                 assert np.isclose(rewards[prog], mean_reward)
             else:
-                assert False, "program is possible in filtered but not in basic!"
+                rewards[prog] = mean_reward
             line = fd.readline()
+
+
+def load_evals(folder: str, env: str):
+    eval_file = f"progs_eval_{env}_seed1_basic.csv"
+    rewards = {}
+    load_eval_file(os.path.join(folder, eval_file), rewards)
+    eval_file = f"progs_eval_{env}_seed1_basic_with_csts.csv"
+    load_eval_file(os.path.join(folder, eval_file), rewards)
     return rewards
+
 
 def plot(folder: str):
     env = os.path.basename(folder[:-1] if folder[-1] == "/" else folder)
     # Load evals
     rewards = load_evals(folder, env)
     print("loaded evals of:", len(rewards), "programs")
-    # Preprocessing
-    all_to_preprocess = []
-    for file in glob(f"{folder}/*.csv"):
-        basename = os.path.basename(file)
-        if not (basename.startswith("_") or basename.startswith("automatic")):
-            continue
-        all_to_preprocess.append(file)
-    print(f"{len(all_to_preprocess)} file(s) to preprocess")
-    with Pool() as p:
-        p.map_async(preprocess, all_to_preprocess).wait()
-
 
     # Map traces to rewards
-    methods = {"basic": [], "filter": []}
+    methods = {}
+    missing = []
     for file in tqdm.tqdm(glob(f"{folder}/*.csv")):
         basename = os.path.basename(file)
-        if not basename.startswith("preprocessed"):
+        # if not basename.startswith(prefix):
+        #     continue
+        # basename = basename[len(prefix):]
+        if not (basename.startswith("_") or basename.startswith("automatic_")):
             continue
+
         values = []
         with open(file) as fd:
             lines = fd.readlines()
-            for line in lines:
+            lines.pop(0)
+            for lineno, line in enumerate(lines):
                 elems = line.split(",")
                 time = float(elems.pop(0))
                 program = elems.pop().strip(" \n")
                 if program not in rewards:
-                    print("FATAL ERROR in:", file, "with:", program)
-                    break
+                    print("FATAL ERROR in:", file, "with:", program, "line n°:", lineno)
+                    missing.append(program)
+                    # break
+                    continue
                 values.append((time, rewards[program]))
-        if basename.startswith("preprocessed__"):
-            methods["basic"].append(values)
-        elif basename.startswith("preprocessed_automatic"):
-            methods["filter"].append(values)
+        if basename.startswith("_"):
+            i = len("_")
+            seed = int(basename[i : basename.find("_", i)])
+            name = "basic"
+        elif basename.startswith("automatic_"):
+            i = len("automatic_")
+            seed = int(basename[i : basename.find("_", i)])
+            name = "filter"
+        else:
+            assert False
+        name += basename[basename.find("_", i) : -len(".csv")]
+        name = name.replace("none", "").replace("__", "_").strip("_").replace("_", " ")
+        if len(values) == 0:
+            continue
+        if name not in methods:
+            methods[name] = {}
+        methods[name][seed] = values
+    plot_y_wrt_x(
+        plt.gca(), methods, (0, "Time (in s)"), (1, "Mean Reward"), cumulative=False
+    )
+    plt.show()
+    with open(f"./missing_{env}.txt", "w") as fd:
+        fd.write("\n".join(set(missing)))
 
-            
-        
+
 if __name__ == "__main__":
     import argparse
 
