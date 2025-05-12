@@ -3,6 +3,7 @@ import argparse
 import json
 import csv
 
+import os
 from typing import Dict
 
 import numpy as np
@@ -68,7 +69,12 @@ parser.add_argument(
 parser.add_argument(
     "--automaton",
     type=str,
-    help="path to the automaton",
+    help="path to the automaton folder",
+)
+
+parser.add_argument(
+    "--filter",
+    action="store_true",
 )
 
 params = parser.parse_args()
@@ -82,6 +88,7 @@ env_name: str = params.env
 env = gym.make(env_name, **env_args)
 use_sampling: bool = params.sampling
 use_mab: bool = params.mab
+use_filter: bool = params.filter
 
 # =========================================================================
 # GLOBAL PARAMETERS
@@ -90,7 +97,11 @@ MAX_BUDGET: int = 500
 MAX_TO_CHECK_SOLVED: int = 100
 BATCH_SIZE: int = 10
 SIZE: int = 15
-
+print("PRECISE:", use_precise)
+print("SAMPLING:", use_sampling)
+print("MAB:", use_mab)
+print("ENV:", env_name)
+print("GOAL:", TARGET_RETURN)
 if "Pong" in env_name:
     from pong_wrapper import make_pong
 
@@ -122,18 +133,20 @@ if "float" in str(type_request) and "Pong" not in env_name and use_mab:
     constant_types.add(auto_type("float"))
 # Filter
 auto = size_constraint(dsl, type_request, SIZE)
+file = os.path.join(automaton, "basic.grape" if not use_filter else "filter.grape")
 try:
-    if automaton is None:
-        raise FileNotFoundError
     if not use_mab:
-        automaton = automaton.replace(".grape", "_with_csts.grape")
+        file = file.replace(".grape", "_with_csts.grape")
+    print("FILE USED:", automaton)
+    print("MAB:", use_mab)
     G = parse(
         dsl,
-        automaton,
+        file,
         type_request,
         constant_types,
         env.action_space.n if type_request.ends_with(auto_type("action")) else 0,
     )
+    # print(auto)
     dfta = auto.read_product(G)
     dfta.reduce()
 except FileNotFoundError:
