@@ -182,8 +182,15 @@ stats = [
 
 
 def log_data():
+    stats.append(
+        (
+            chronometer.total_time(),
+            topk.get_best_stats()[0],
+        )
+    )
     with open(output_file, "w") as fd:
         csv.writer(fd).writerows(stats)
+    stats.pop()
 
 
 def print_search_state():
@@ -321,12 +328,15 @@ while True:
         evaluator.record(True)
         copy.refresh_hash()
     counter.count("programs.evaluated", 1)
-    stats.append(
-        (
-            chronometer.total_time(),
-            copy,
-        )
-    )
+    if topk.num_candidates() > 0:
+        current_best = topk.get_best_stats()[0]
+        if len(stats) <= 1 or current_best != stats[-1][-1]:
+            stats.append(
+                (
+                    chronometer.total_time(),
+                    current_best,
+                )
+            )
     with chronometer.clock("evaluation.comparison"):
         ejected, budget_used = topk.challenge_with(
             copy, MAX_BUDGET, prior_experience=returns
