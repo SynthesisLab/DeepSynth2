@@ -39,6 +39,12 @@ parser.add_argument(
     help="target score after which we automatically stop",
 )
 parser.add_argument(
+    "-p",
+    "--procs",
+    type=int,
+    default=1,
+)
+parser.add_argument(
     "--with-target",
     action="store_true",
     help="Consider only programs where all runs are above threshold",
@@ -50,6 +56,7 @@ output_file: str = params.output
 env_args: Dict = json.loads(params.env_arg)
 env_name: str = params.env
 env = gym.make(env_name, **env_args)
+procs: int = params.procs
 
 
 # =========================================================================
@@ -105,5 +112,11 @@ with open(params.file) as fd:
         for str_prog in tqdm.tqdm(str_programs, desc="parsing")
     ]
 evaluate_programs_to_csv(
-    programs, build_env, prog_evaluator, MAX_BUDGET, output_file, bootstrap=params.warm
+    programs,
+    build_env,
+    prog_evaluator,
+    MAX_BUDGET,
+    output_file,
+    bootstrap=params.warm,
+    procs=procs,
 )

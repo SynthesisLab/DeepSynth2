@@ -8,6 +8,8 @@ import pandas as pd
 import os
 import atexit
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 
 def evaluate_programs_to_csv(
     programs: List[Program],
@@ -17,6 +19,7 @@ def evaluate_programs_to_csv(
     csv_file: str = "program_evaluation.csv",
     save_every: int = 10,
     bootstrap: str = "",
+    procs: int = 1,
 ):
     """
     Evaluates a list of programs on an environment for multiple seeds and saves the results to a CSV.
@@ -28,7 +31,6 @@ def evaluate_programs_to_csv(
         num_seeds: Number of seeds to use for evaluation.
         csv_file: Path to the CSV file to save the results.
     """
-    program_evaluator = ProgramEvaluator(env_factory, evaluator)
     results = {}
 
     progs_as_str = {str(p): i for i, p in enumerate(programs)}
@@ -107,12 +109,10 @@ def evaluate_programs_to_csv(
         if program not in results:
             results[program] = {}
 
-    atexit.register(save)
-    i = 0
-    for program in tqdm.tqdm(programs):
-        rew = results[program]
+    def eval_prog(program: Program, rew: dict):
+        program_evaluator = ProgramEvaluator(env_factory, evaluator)
         if len(rew) == num_seeds:
-            continue
+            return program, rew
         for seed in range(num_seeds):
             if seed not in rew:
                 env = env_factory()
@@ -120,10 +120,28 @@ def evaluate_programs_to_csv(
                 program_evaluator.cache[program.hash] = (env, [])
                 program_evaluator.eval(program)
                 rew[seed] = program_evaluator.returns(program)[-1]
-        i += 1
-        if i >= save_every:
-            save()
-            i = 0
-    if i != 0:
-        save()
+        return program, rew
+
+    atexit.register(save)
+    to_apply = [
+        (prog, results[prog].copy())
+        for prog in programs
+        if len(results[prog]) < num_seeds
+    ]
+
+    with ProcessPoolExecutor(procs) as p:
+        futures = [p.submit(eval_prog, el) for el in to_apply]
+        remaining = len(futures)
+        pbar = tqdm.tqdm(remaining)
+        for f in as_completed(futures):
+            if f.done():
+                prog, rew = f.result()
+                results[prog] = rew
+                remaining -= 1
+            if remaining % save_every == 0:
+                save()
+            pbar.update(1)
+        pbar.close()
+
+    save()
     atexit.unregister(save)
