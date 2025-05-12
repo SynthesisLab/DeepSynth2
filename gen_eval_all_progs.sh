@@ -8,8 +8,10 @@ BASIC_CST="./grammars/basic_with_csts.grape"
 FILTER_CST="./grammars/filter_with_csts.grape"
 FILTER="./grammars/filter.grape"
 SIZE=10
-if [[ $NAME == "lunar_lander" || $NAME == "acrobot" ]]; then
+if [[ $NAME == "lunar_lander"]; then
     SIZE=9
+elif [[ $NAME == "acrobot" ]]; then
+    SIZE=8
 fi
 
 if [ ! -d "./$NAME" ]; then

@@ -14,9 +14,9 @@ function run_exp(){
     filename="$NAME/${dfta}_${seed}_${solver}_${opti}.csv"
     # echo "file:$filename"
     if [ ! -f "$filename" ]; then
-        arg="--automaton './grammars/filter.grape'"
-        if [[ -z $dfta ]]; then
-            arg=""
+        arg=""
+        if [[ $dfta == "automatic" ]]; then
+            arg="$arg --filter"
         fi
         if [[ ! $solver == "none" ]]; then
             arg="$arg --$solver"
@@ -24,7 +24,7 @@ function run_exp(){
         if [[ ! $opti == "none" ]]; then
             arg="$arg --$opti"
         fi
-        echo "python examples/rl/solve.py --seed $seed -o $filename $arg @$ENV"
+        echo "python examples/rl/solve.py --seed $seed -o $filename --automaton './grammars' $arg @$ENV"
     fi
 }
 
