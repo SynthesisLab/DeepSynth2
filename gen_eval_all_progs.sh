@@ -23,10 +23,14 @@ do
     basic_progs="./$NAME/progs_${NAME}_basic_seed$SEED.txt"
     basic_progs_cst="./$NAME/progs_${NAME}_basic_with_csts_seed$SEED.txt"
     filter_progs="./$NAME/progs_${NAME}_filter_seed$SEED.txt"
+    missing="./$NAME/missing.txt"
     echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $BASIC --seed $SEED -o $basic_progs"
     echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $BASIC_CST --seed $SEED -o $basic_progs_cst"
     echo "python examples/rl/gen_programs.py @$ENV --size $SIZE --automaton $FILTER --seed $SEED -o $filter_progs"
     echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs -o ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
     echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $basic_progs_cst -o ./$NAME/progs_eval_${NAME}_seed${SEED}_basic_with_csts.csv --warm ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
     echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $filter_progs -o ./$NAME/progs_eval_${NAME}_seed${SEED}_filter.csv --warm ./$NAME/progs_eval_${NAME}_seed${SEED}_basic.csv"
+    if [ -f "$missing" ]; then
+        echo "python examples/rl/eval_all.py @$ENV --seed $SEED -f $missing -o ./$NAME/progs_eval_${NAME}_seed${SEED}_missing.csv --warm ./$NAME/progs_eval_${NAME}_seed${SEED}_basic_with_csts.csv"
+    fi
 done
