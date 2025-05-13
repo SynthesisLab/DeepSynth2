@@ -1,0 +1,101 @@
+solved,solution,programs,time,program_probability
+False,(turnLeft (turnLeft (putMarker (move (putMarker (repeat 3 move var0)))))),35723,2.6578071750000163,1467.2599128510276
+False,(turnRight (putMarker (move (putMarker var0)))),305,0.023174682999979268,64.72595150346973
+False,(turnLeft (pickMarker (move (turnLeft (putMarker (move (turnLeft (move var0)))))))),80799,5.329618395000011,1819.4544952004298
+False,(move (move var0)),22,0.0061580599999615515,12.208071553760853
+False,(putMarker var0),3,0.004231139000012263,5.301898110478397
+False,(turnRight (turnRight (repeat 3 move var0))),568,0.03611324799999238,120.18768946345331
+False,(move (move (turnLeft (repeat 5 move var0)))),2332,0.1460990269999911,276.74238211994515
+False,(turnRight (turnRight var0)),15,0.004840465000029326,12.208071553760853
+False,(turnLeft (move (move (turnLeft (turnLeft (repeat 3 move (turnLeft var0))))))),184254,12.66501887000004,3378.4908028785185
+False,(turnLeft (turnLeft (putMarker (move (turnLeft (pickMarker (move (putMarker var0)))))))),83280,5.60435776199995,1819.4544952004298
+False,(turnLeft (putMarker (move (putMarker (move var0))))),871,0.0535587529999475,149.03701106174492
+False,(turnRight (turnRight var0)),15,0.00484332100006668,12.208071553760853
+False,(turnLeft (turnLeft (putMarker var0))),35,0.006467318999966665,28.110123573894395
+False,(move (move (turnRight (repeat 8 move (turnLeft (move var0)))))),42950,2.667179203999922,1467.2599128510276
+False,(turnLeft (repeat 5 move (turnLeft var0))),702,0.04208014300002105,120.18768946345334
+False,(putMarker (move (putMarker var0))),67,0.0084808859999157,28.110123573894395
+False,(turnLeft (turnLeft (putMarker var0))),35,0.006564142999991418,28.110123573894395
+False,(turnLeft (move (turnLeft var0))),44,0.0067703109999683875,28.110123573894395
+False,(turnLeft (move (turnLeft (turnLeft (move (move var0)))))),5140,0.3992369069999313,343.1703999751625
+False,(move (putMarker (move (turnLeft (pickMarker (move (move (putMarker var0)))))))),107199,7.207668500999944,1819.4544952004298
+False,(move (turnLeft var0)),23,0.005847990000006575,12.208071553760853
+False,(turnLeft (turnLeft (putMarker (move var0)))),219,0.01746687699994709,64.72595150346973
+False,(pickMarker (move (putMarker var0))),88,0.010399550999977691,28.110123573894395
+False,(putMarker (move (move (turnLeft var0)))),373,0.023821634000000813,64.72595150346973
+False,(turnRight (pickMarker (move (turnLeft (putMarker (move (turnLeft (move var0)))))))),96903,6.395810135000033,1819.4544952004298
+False,(putMarker (repeat 6 move (putMarker (move (move var0))))),12670,0.8079731220000212,637.2228836690475
+False,(turnRight (putMarker (move (putMarker (move var0))))),1278,0.07221697600004973,149.03701106174492
+False,(turnLeft (repeat 3 move (turnLeft (move (move var0))))),13740,0.7950060919999942,637.2228836690475
+False,(move (move (turnLeft (putMarker var0)))),277,0.01950291399998605,64.72595150346973
+False,(putMarker (move (turnRight (turnRight (putMarker (repeat 3 move (turnLeft (putMarker var0)))))))),787479,55.09458206700003,7779.26255952556
+False,(turnLeft var0),6,0.00437058199997864,5.301898110478397
+False,(turnRight (putMarker (repeat 8 move var0))),556,0.03495248099989112,120.18768946345331
+False,(move (turnLeft (turnLeft (putMarker (repeat 3 move (putMarker var0)))))),39916,2.3927191420000327,1467.2599128510276
+False,(move (pickMarker (move (turnRight (putMarker (move (turnLeft var0))))))),18560,1.033920084999977,790.1790473396134
+False,(turnRight (putMarker (repeat 3 move var0))),554,0.038052531999937855,120.18768946345331
+False,(move (move (turnLeft (repeat 6 move var0)))),2337,0.13427378500000486,276.74238211994515
+False,(turnLeft (turnLeft (putMarker var0))),35,0.006336845999953766,28.110123573894395
+False,(putMarker (move (turnLeft (putMarker (move var0))))),1035,0.061197171000003436,149.03701106174492
+False,(turnRight (repeat 3 move (turnLeft (repeat 8 move (putMarker var0))))),142072,9.784367089000057,2724.511184025771
+False,(putMarker (move (turnLeft (putMarker (repeat 3 move (turnLeft (move var0))))))),157058,10.652429540999947,3378.4908028785185
+False,(turnRight (putMarker var0)),12,0.0050572300000339965,12.208071553760853
+False,(putMarker (move (turnLeft var0))),70,0.008064362000027359,28.110123573894395
+False,(turnRight (turnRight var0)),15,0.004720614000007117,12.208071553760853
+False,(repeat 5 move (turnLeft (putMarker var0))),411,0.02854590599997664,120.18768946345335
+False,(pickMarker (move (putMarker (move var0)))),181,0.016287941000086903,64.72595150346973
+False,(turnLeft (putMarker (move (turnLeft (move var0))))),864,0.051993217000017466,149.03701106174492
+False,(move (putMarker (move (turnLeft (repeat 8 move var0))))),8964,0.5224752840000519,637.2228836690475
+False,(turnRight (putMarker var0)),12,0.0046635130000822755,12.208071553760853
+False,(turnRight (turnRight (repeat 4 move var0))),573,0.036660078999943835,120.18768946345331
+False,(turnRight (putMarker (move (move (turnLeft (putMarker var0)))))),6111,0.3285292349999054,343.1703999751625
+False,(move var0),2,0.003916144999948301,5.301898110478397
+False,(move (move (turnLeft (putMarker var0)))),277,0.019496378999974695,64.72595150346973
+False,(turnRight (putMarker (move var0))),86,0.009293655999954353,28.110123573894395
+False,(move (putMarker (move (turnLeft (move (move (putMarker var0))))))),18738,1.0392852600000424,790.1790473396134
+False,(turnLeft (move (turnRight (putMarker (repeat 5 move (turnLeft (move var0))))))),189374,12.957848867000052,3378.4908028785185
+False,(turnRight (turnRight (move (putMarker (repeat 3 move var0))))),10425,0.6011591950000366,637.2228836690475
+False,(turnRight (putMarker (move (putMarker (repeat 6 move var0))))),11096,0.7924603330000082,637.2228836690475
+False,(turnRight (putMarker var0)),12,0.004653360000020257,12.208071553760853
+False,(putMarker (repeat 3 move (turnLeft (move var0)))),2515,0.14729943800000456,276.74238211994515
+False,(turnLeft (putMarker (move (turnLeft var0)))),196,0.01600839000002452,64.72595150346973
+False,(turnRight (repeat 8 move (putMarker var0))),522,0.03324915799998962,120.18768946345334
+False,(move (turnLeft (putMarker var0))),53,0.006966217000012875,28.110123573894395
+False,(putMarker (move (move var0))),69,0.00782902000003105,28.110123573894395
+False,(turnLeft (repeat 5 move (turnLeft (putMarker var0)))),2832,0.1604042980000031,276.74238211994515
+False,(turnLeft var0),6,0.004037797000023602,5.301898110478397
+False,(turnRight (turnRight var0)),15,0.0046422870000242256,12.208071553760853
+False,(putMarker (move (turnLeft (turnLeft (repeat 3 move (putMarker var0)))))),58326,3.815280582000014,1467.2599128510276
+False,(turnRight (putMarker (move var0))),86,0.008816324000008535,28.110123573894395
+False,(turnLeft (pickMarker (move (move (putMarker (move (putMarker var0))))))),23775,1.5239145389999749,790.1790473396134
+False,(turnRight (putMarker (repeat 3 move var0))),554,0.0352662740000369,120.18768946345331
+False,(repeat 5 move (turnLeft (putMarker (repeat 8 move var0)))),30503,2.052749677999941,1183.2401731060875
+False,(turnRight (move (putMarker (move var0)))),335,0.02154899699996804,64.72595150346973
+False,(turnRight (turnRight var0)),15,0.004671718999929908,12.208071553760853
+False,(turnLeft (putMarker var0)),16,0.004827900000009322,12.208071553760853
+False,(move (putMarker (move (move (putMarker var0))))),1485,0.11741547799999807,149.03701106174492
+False,(repeat 9 move (turnRight (repeat 5 move (turnLeft (putMarker var0))))),128584,8.313591480000014,2724.511184025771
+False,(turnRight (repeat 9 move (turnLeft (repeat 8 move var0)))),29208,1.8907096819999651,1183.2401731060875
+False,(turnRight (move (putMarker (move var0)))),335,0.02171307399999023,64.72595150346973
+False,(turnLeft (turnLeft (putMarker (repeat 3 move var0)))),3024,0.28003654500002995,276.74238211994515
+False,(turnRight (putMarker (repeat 3 move var0))),554,0.034838225999919814,120.18768946345331
+False,(move (putMarker (move (putMarker var0)))),256,0.018719759999953567,64.72595150346973
+False,(move (turnLeft (pickMarker (repeat 6 move (turnLeft (putMarker (move var0))))))),230592,15.391790774000015,3378.4908028785185
+False,(turnLeft (turnLeft (putMarker (move var0)))),219,0.01679052299994055,64.72595150346973
+False,(repeat 9 move var0),28,0.006202039000072546,22.66880406960681
+False,(putMarker (repeat 3 move var0)),137,0.013912103000052412,52.19685032667939
+False,(turnRight (pickMarker (move (move (putMarker (repeat 7 move (turnLeft var0))))))),191596,13.272979402000033,3378.4908028785185
+False,(turnRight var0),5,0.00430642000003445,5.301898110478397
+False,(turnRight (putMarker var0)),12,0.0046339049999915005,12.208071553760853
+False,(turnLeft (turnLeft (pickMarker (move (move (putMarker var0)))))),5422,0.31027097399999093,343.1703999751625
+False,(turnRight (repeat 3 move (putMarker (move var0)))),3432,0.29700321600000734,276.74238211994515
+False,(turnLeft (turnLeft (putMarker var0))),35,0.006243528000027254,28.110123573894395
+False,(turnRight (putMarker var0)),12,0.004633421999983511,12.208071553760853
+False,(turnLeft (putMarker var0)),16,0.005043737000050896,12.208071553760853
+False,(turnRight (putMarker var0)),12,0.0046352519999572905,12.208071553760853
+False,(turnLeft (turnLeft (move (turnLeft (putMarker (repeat 5 move var0)))))),35409,2.3633716350000213,1467.2599128510276
+False,(turnLeft (putMarker var0)),16,0.005145761999983733,12.208071553760853
+False,(turnLeft (repeat 4 move (turnLeft (repeat 6 move var0)))),27882,1.8408401489999733,1183.2401731060875
+False,(turnLeft var0),6,0.0041843199999220815,5.301898110478397
+False,(turnLeft (turnLeft (pickMarker (repeat 3 move (putMarker (move var0)))))),34836,2.334021861999986,1467.2599128510276
+False,(putMarker (repeat 5 move var0)),138,0.013708817999940948,52.19685032667939
