@@ -29,7 +29,11 @@ def load_evals(folder: str, env: str):
     rewards = {}
     load_eval_file(os.path.join(folder, eval_file), rewards)
     eval_file = f"progs_eval_{env}_seed1_basic_with_csts.csv"
-    load_eval_file(os.path.join(folder, eval_file), rewards)
+    if os.path.exists(eval_file):
+        load_eval_file(os.path.join(folder, eval_file), rewards)
+    eval_file = f"progs_eval_{env}_seed1_missing.csv"
+    if os.path.exists(eval_file):
+        load_eval_file(os.path.join(folder, eval_file), rewards)
     return rewards
 
 
