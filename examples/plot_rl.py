@@ -15,7 +15,7 @@ def load_eval_file(file: str, rewards: dict):
         line = fd.readline()
         while line:
             elems = line.split(",")
-            prog = elems.pop(0)
+            prog = elems.pop(0).replace(".0", "")
             mean_reward = sum(map(float, elems)) / len(elems)
             if prog in rewards:
                 assert np.isclose(rewards[prog], mean_reward)
