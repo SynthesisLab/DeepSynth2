@@ -159,7 +159,7 @@ def evaluate_programs_to_csv(
 
     with ProcessPoolExecutor(procs) as p:
         futures = [p.submit(eval_prog, *el) for el in to_apply]
-        remaining = len(futures)
+        remaining = len(relevant)
         pbar = tqdm.tqdm(total=remaining)
         last_saved = False
         for f in as_completed(futures):
