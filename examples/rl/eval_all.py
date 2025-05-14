@@ -49,7 +49,12 @@ parser.add_argument(
     action="store_true",
     help="Consider only programs where all runs are above threshold",
 )
-
+parser.add_argument(
+    "--max-size",
+    default=15,
+    type=int,
+    help="Consider only programs where all runs are above threshold",
+)
 params = parser.parse_args()
 SEED: int = params.seed
 output_file: str = params.output
@@ -58,7 +63,7 @@ env_name: str = params.env
 env = gym.make(env_name, **env_args)
 procs: int = params.procs
 
-
+THRESHOLD: int = params.max_size
 # =========================================================================
 # GLOBAL PARAMETERS
 # max number of episodes that should be done at most to compare two possibly equal (optimised) candidates
@@ -111,6 +116,7 @@ with open(params.file) as fd:
         clever_parse(str_prog.replace("\n", ""))
         for str_prog in tqdm.tqdm(str_programs, desc="parsing")
     ]
+    programs = [p for p in programs if p.size() <= THRESHOLD]
 evaluate_programs_to_csv(
     programs,
     build_env,
