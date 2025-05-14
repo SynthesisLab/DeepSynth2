@@ -29,10 +29,10 @@ def load_evals(folder: str, env: str):
     rewards = {}
     load_eval_file(os.path.join(folder, eval_file), rewards)
     eval_file = f"progs_eval_{env}_seed1_basic_with_csts.csv"
-    if os.path.exists(eval_file):
+    if os.path.exists(os.path.join(folder, eval_file)):
         load_eval_file(os.path.join(folder, eval_file), rewards)
     eval_file = f"progs_eval_{env}_seed1_missing.csv"
-    if os.path.exists(eval_file):
+    if os.path.exists(os.path.join(folder, eval_file)):
         load_eval_file(os.path.join(folder, eval_file), rewards)
     return rewards
 
@@ -57,13 +57,15 @@ def plot(folder: str):
         values = []
         with open(file) as fd:
             lines = fd.readlines()
+            if len(lines) <= 1:
+                continue
             lines.pop(0)
             for lineno, line in enumerate(lines):
                 elems = line.split(",")
                 time = float(elems.pop(0))
                 program = elems.pop().strip(" \n")
                 if program not in rewards:
-                    print("FATAL ERROR in:", file, "with:", program, "line n°:", lineno)
+                    # print("FATAL ERROR in:", file, "with:", program, "line n°:", lineno)
                     missing.append(program)
                     # break
                     continue
@@ -86,11 +88,23 @@ def plot(folder: str):
             methods[name] = {}
         methods[name][seed] = values
     plot_y_wrt_x(
-        plt.gca(), methods, (0, "Time (in s)"), (1, "Mean Reward"), cumulative=False
+        plt.gca(),
+        methods,
+        (1, "Mean Reward"),
+        (0, "Time (in s)"),
+        cumulative=False,
+        ylim=(None, None),
+        xlim=(None, None),
     )
+    # plt.xlim(right=150)
+    # plt.ylim(top=2)
+    if missing:
+        print(f"Missing {len(set(missing))} evaluations of programs")
+        with open(f"./missing_{env}.txt", "w") as fd:
+            fd.write("\n".join(set(missing)))
+    else:
+        print("No missing evaluation")
     plt.show()
-    with open(f"./missing_{env}.txt", "w") as fd:
-        fd.write("\n".join(set(missing)))
 
 
 if __name__ == "__main__":
