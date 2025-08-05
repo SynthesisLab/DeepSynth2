@@ -13,8 +13,13 @@ class NGram:
     n: int
     predecessors: List[Tuple[DerivableProgram, int]] = field(default_factory=lambda: [])
 
+    _hash: "int | None" = field(init=False)
+
+    def __post_init__(self):
+        object.__setattr__(self, "_hash", hash((self.n, tuple(self.predecessors))))
+
     def __hash__(self) -> int:
-        return hash((self.n, tuple(self.predecessors)))
+        return self._hash
 
     def __str__(self) -> str:
         return str(self.predecessors)
