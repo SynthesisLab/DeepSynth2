@@ -1,29 +1,40 @@
-[tool.poetry]
+[project]
 name = "synth"
 version = "0.1.0"
 description = "Automated Synthesis Framework"
-authors = ["Théo Matricon <theomatricon@gmail.com>", "Nathanaël Fijalkow <nathanael.fijalkow@gmail.com>"]
-license = "MIT"
+authors = [
+    { name = "Théo Matricon", email = "theomatricon@gmail.com" },
+    { name = "Nathanaël Fijalkow", email = "nathanael.fijalkow@gmail.com" },
+]
+requires-python = ">=3.10"
 readme = "README.md"
-repository = "https://github.com/SynthesisLab/DeepSynth2"
+license = "MIT"
+dependencies = [
+    "torch>=1.13.1",
+    "tensorboard>=0",
+    "cython>=0.29",
+    "numpy>=1.22",
+    "vose",
+    "colorama>=0.4.4",
+    "tqdm>=4.63.0",
+    "matplotlib>=3.5.1",
+    "pltpublish>=0.1.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.8"
-torch = ">=1.13.1"
-tensorboard = ">=0"
-cython = ">=0.29"
-numpy = ">=1.22"
-vose = { git = "https://github.com/Theomat/vose.git"}
-colorama = ">=0.4.4"
-tqdm = ">=4.63.0"
-matplotlib = ">=3.5.1"
-pltpublish = ">=0.1.0"
+[project.urls]
+Repository = "https://github.com/SynthesisLab/DeepSynth2"
 
-[tool.poetry.dev-dependencies]
-ruff = ">= 0.4.3"
-pytest = ">=7.2.0"
-mypy = ">=0.910"
+[dependency-groups]
+dev = [
+    "ruff>= 0.4.3",
+    "pytest>=7.2.0",
+    "mypy>=0.910",
+]
+
+[tool.uv.sources]
+vose = { git = "https://github.com/Theomat/vose.git" }
+grape = { git = "https://github.com/SynthesisLab/grape.git" }
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
