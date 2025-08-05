@@ -367,6 +367,7 @@ class Arrow(Type):
     def __init__(self, type_in: Type, type_out: Type):
         self.type_in = type_in
         self.type_out = type_out
+        self.is_out_arrow = isinstance(self.type_out, Arrow)
         self.hash = hash((self.type_in, self.type_out))
 
     def __pickle__(o: Type) -> Tuple:
@@ -414,7 +415,7 @@ class Arrow(Type):
         """
         Get the return type of this arrow.
         """
-        if isinstance(self.type_out, Arrow):
+        if self.is_out_arrow:
             return self.type_out.returns()
         return self.type_out
 
@@ -422,7 +423,7 @@ class Arrow(Type):
         """
         Get the list of arguments in the correct order of this arrow.
         """
-        if isinstance(self.type_out, Arrow):
+        if self.is_out_arrow:
             return [self.type_in] + self.type_out.arguments()
         return [self.type_in]
 
