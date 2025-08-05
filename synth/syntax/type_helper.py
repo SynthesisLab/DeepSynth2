@@ -31,10 +31,10 @@ def FunctionType(*args: Type) -> Type:
     """
     Short-hand to create n-ary functions.
     """
-    types = list(args)
-    base = types.pop()
-    while types:
-        base = Arrow(types.pop(), base)
+    n = len(args) - 1
+    base = args[-1]
+    for i in range(n - 1, -1, -1): 
+        base = Arrow(args[i], base)
     return base
 
 
